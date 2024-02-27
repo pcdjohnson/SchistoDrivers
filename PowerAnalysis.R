@@ -8,7 +8,7 @@ rm(list = ls())
 
 
 # Study design options
-n <- c(100, 200, 500, 1000)
+n <- c(400, 600, 800, 1000, 1200)
 
 # Model parameters
 p <- 0.3 # failure to clear proportion
@@ -87,7 +87,7 @@ sim.res <-
 run.time <- Sys.time() - start.time
 print(run.time)
 
-par.tab$n.drivers <- sim.res
+par.tab$prop.drivers <- sim.res/n.x
 
 
 
@@ -96,13 +96,13 @@ par.tab$n <- factor(par.tab$n, rev(n))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 
 power.plot <-
-  ggplot(data = par.tab, aes(x = or, y = n.drivers, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
   geom_point() +
   geom_line() +
-  ylim(0, n.x) +
+  ylim(0, 1) +
   facet_wrap(~ r + alpha, ncol = 2) +
   xlab("Odds ratio") +
-  ylab("No of drivers detected (P < alpha)") +
+  ylab("Power") +
   labs(caption = paste(paste0("no of simulations = ", n.sim), substr(Sys.time(), 1, 16), sep = "\n")) +
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
