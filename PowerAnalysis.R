@@ -37,7 +37,10 @@ par.tab <- expand.grid(n = n, p = p, or = or, r = r, alpha = alpha, n.sim = n.si
 start.time <- Sys.time()
 sim.res <- 
   sapply(1:nrow(par.tab), function(i) {
+    
     # i <- nrow(par.tab)
+    
+    print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
     
     # Simulate Xs
     
@@ -87,23 +90,31 @@ sim.res <-
 run.time <- Sys.time() - start.time
 print(run.time)
 
+#' Estimate power as the proportion of the n.x drivers with p < alpha
 par.tab$prop.drivers <- sim.res/n.x
 
 
+#' Export results to CSV file with time stamp in file name
+file.name <- paste0("results/schisto_power", 
+                    substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
+write.csv(par.tab, file.name, row.names = FALSE, quote = FALSE)
 
+
+#' Make plot of results
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
 par.tab$n <- factor(par.tab$n, rev(n))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 
 power.plot <-
   ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
+  geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
   facet_wrap(~ r + alpha, ncol = 2) +
   xlab("Odds ratio") +
   ylab("Power") +
-  labs(caption = paste(paste0("no of simulations = ", n.sim), substr(Sys.time(), 1, 16), sep = "\n")) +
+  labs(caption = file.name) +
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot
