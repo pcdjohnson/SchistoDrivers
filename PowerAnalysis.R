@@ -16,9 +16,9 @@ rm(list = ls())
 n <- seq(500, 3000, 500)
 
 # Model parameters
-p <- 0.3 # failure to clear proportion
+p <- seq(0.05, 0.3, 0.05) # failure to clear proportion
 or <- seq(1, 2, 0.25) # odds ratio per binary predictor or per SD for continuous
-r <- c(0, 0.25) # how correlated are predictors (because abs(r) > 0 reduces power)
+r <- c(0.25) # how correlated are predictors (because abs(r) > 0 reduces power)
 
 # Choose candidate drivers:
 
@@ -33,7 +33,7 @@ bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resista
 
 # Further simulation and analysis options
 n.sim <- 1000
-alpha <- c(0.05, 0.05/n.x)
+alpha <- c(0.05/n.x)
 
 # Make table of all parameter and design combinations
 par.tab <- expand.grid(n = n, p = p, or = or, r = r, alpha = alpha, n.sim = n.sim)
@@ -121,6 +121,7 @@ write.csv(par.tab, file.name, row.names = FALSE, quote = FALSE)
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
 par.tab$n <- factor(par.tab$n, rev(n))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
+par.tab$p <- factor(paste("P(failure to clear) =", par.tab$p))
 
 power.plot <-
   ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
@@ -128,7 +129,7 @@ power.plot <-
   geom_point() +
   geom_line() +
   ylim(0, 1) +
-  facet_wrap(~ r + alpha, ncol = 2) +
+  facet_wrap(~ p, ncol = 2) +
   xlab("Odds ratio") +
   ylab("Power") +
   labs(caption = file.name) + # link results filename to plot
