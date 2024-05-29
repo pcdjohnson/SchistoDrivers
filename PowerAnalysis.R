@@ -49,7 +49,7 @@ bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resista
 # Further simulation and analysis options
 
 # number of data sets to simulate
-n.sim <- 1000
+n.sim <- 10
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
 alpha <- c(0.05/n.x)
@@ -224,8 +224,31 @@ cat("# SchistoDrivers\n\n",
     "### Power analysis for identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
     "The script PowerAnalysis.R estimates power across a range of model parameter assumptions and",
     "sample sizes, detailed in comments are in the R scriptxxx. Results are output as CSV to the results",
-    "directory and plotted to schisto_power.pdf.",
+    "directory and plotted to schisto_power.pdf.\n\n",
+    "The aim of the power analysis is to estimate power to detect drivers of praziquantel treatment",
+    "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
+    "where the study data is simulated and analysed multiple times under varying study design",
+    "scenarios, and power is estimated as the proportion of simulated analyses that achieve the",
+    "desired outcome (detecting a true driver of treatment failure). The association between the",
+    "outcome (treatment failure) and each driver is estimated and tested in a multivariable GLM.",
+    "For this analysis, power is defined as the proportion of drivers that are significantly associated",
+    paste("with the outcome, averaged across", n.sim, "simulated data analyses per scenario.\n\n"),
     file = readme.file)
+
+
+
+
+The following assumptions are made:
+  Ten drivers are associated with the outcome, of which four are binary and six continuous. Of the binary drivers, three have a prevalence of 20% (e.g. HIV, STH, hybrid/resistance presence) and one 50% (e.g. malaria).
+The drivers are correlated with each other, with a common correlation coefficient of 0.25. We don’t know what the true correlation is among drivers, but moderate correlations are likely and neglecting them will give optimistic power estimates.
+In order to control inflation of the number of false positive results due to multiple testing of 10 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.005, i.e. a driver is significant if P < 0.005.
+
+We explore the effect on power of varying the following study design choices/assumptions:
+  Sample size (number of infected and treated individuals): 500, 1000, 1500, 2000, 2500, 3000.
+The proportion of these that fail to clear: 5%, 10%, 15%, 20%, 25%, 30%.
+The strength of association between each driver and failure to clear, defined as an odds ratio for binary drivers and as an odds ratio per standard deviation unit continuous drivers: 1.25, 1.50, 1.75, 2.00. To give a sense of what these effect sizes mean:
+  If a binary driver has an odds ratio of 1.5, then if 5% of people fail to clear in the absence of a driver, that proportion will be 7.3% among those who are exposed to the driver. If the prevalence of failure to clear is 25% without the driver, it will be 33% with the driver.
+If we raise the odds ratio from 1.5 to 2, then the equivalent proportions will be 5% -> 9.5% and 25% -> 40%.
 
 #cat(paste('<p><em>Assumption ',assume.num,'.</em><br/>',assume.text,'</p>',sep=''),sep='\n',file=assume.out,append=TRUE)
 #  cat("</body>","</html>",file=assume.out,sep="\n",append=TRUE)
