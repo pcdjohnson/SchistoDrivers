@@ -1,5 +1,13 @@
-# Script to estimate power to identify multiple drivers of praziquantel 
-# treatment failure in individuals infected with schisto
+###########################################################################
+# Script to estimate power to identify multiple drivers of praziquantel   #
+# treatment failure in individuals infected with schistosomiasis.         #
+#                                                                         #
+# This is a simulation-based power analysis, where the project data is    #
+# simulated and analysed multiple times under different study design      #
+# scenarios, and power is estimated as the proportion of simulated        #
+# analyses that achieve the desired outcome (e.g. detecting a true        # 
+# driver of treatment failure).                                           #
+###########################################################################
 
 # Load packages
 library(ggplot2)
@@ -16,9 +24,16 @@ rm(list = ls())
 n <- seq(500, 3000, 500)
 
 # Model parameters
-p <- seq(0.05, 0.3, 0.05) # failure to clear proportion
-or <- seq(1, 2, 0.25) # odds ratio per binary predictor or per SD for continuous
-r <- c(0.25) # how correlated are predictors (because abs(r) > 0 reduces power)
+
+# failure to clear proportion
+p <- seq(0.05, 0.3, 0.05) 
+
+# odds ratio per binary predictor, or per SD for continuous predictors
+or <- seq(1, 2, 0.25) 
+
+# how correlated are predictors (because abs(r) > 0 reduces power,
+# and it would be unrealistic to assume zero correlation)
+r <- c(0.25) 
 
 # Choose candidate drivers:
 
@@ -32,7 +47,11 @@ n.x <- 10
 bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resistance presence 20%
 
 # Further simulation and analysis options
+
+# number of data sets to simulate
 n.sim <- 1000
+
+# adjust the significance thresholds for multiple testing (Bonferroni)
 alpha <- c(0.05/n.x)
 
 # Make table of all parameter and design combinations
@@ -45,8 +64,7 @@ start.time <- Sys.time()
 sim.res <- 
   sapply(1:nrow(par.tab), function(i) {
     
-    # i <- nrow(par.tab)
-    
+    # Print progress
     print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
     
     # Simulate Xs (the drivers)
@@ -75,13 +93,6 @@ sim.res <-
                   X.raw[, j]
                 }))
         
-        
-        # scale all Xs to have zero mean and SD=1 - actually *don't* do this, as it simulates
-        # huge effect sizes (so low power for realistic effect sizes) for rare binary 
-        # predictors
-        #X[, -1] <- apply(X[, -1], 2, scale)
-        #apply(X[, -1], 2, sd)
-        
         # vector of intercept (log odds) and log odds ratios
         b <- c(qlogis(par.tab$p[i]), log(rep(par.tab$or[i], n.x)))
         
@@ -95,11 +106,11 @@ sim.res <-
         fit <- glm(response ~ X[, -1], family = binomial)
         res.tab <- coef(summary(fit))
         
-        
-        # How many Xs were detected (P < alpha)?
+        # How many drivers were detected (P < alpha)?
         sum(res.tab[-1, "Pr(>|z|)"] < par.tab$alpha[i])
         
       }, mc.cores = detectCores())
+    
     # take mean number of drivers (Xs) detected across simulated data sets
     mean(unlist(n.sim.out))
     
@@ -159,8 +170,6 @@ if(FALSE) {
   plot(delta.AUC, N.per.group, log = "y", type = "b")
   title("Sample size required per group for 80% power at alpha = 0.05\ngiven target delta.AUC in SD units")
   cbind(delta.AUC, N.per.group)
-  
-  
   
   # Additional power analysis for comparison of eggs per gram between two groups:
   #   - food then praziquental
