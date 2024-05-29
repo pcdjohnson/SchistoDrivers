@@ -8,4 +8,11 @@
 
  The following assumptions are made:
 - 10 drivers are associated with the outcome, of which 4 are binary and 6 continuous. The prevalences of the binary drivers are: 0.2, 0.2, 0.2, 0.5, representing drivers such as co-infection (HIV, soil-transmitted helminths, malaria) and hybrid/resistance presence).
- - The drivers are correlated with each other, with a common correlation coefficient of
+ - The drivers are correlated with each other, with a common correlation coefficient of 0.25. We don’t know what the true correlation is among drivers, but moderate correlations are likely and neglecting them will give optimistic power estimates.
+ - In order to control inflation of the number of false positive results due to multiple testing of 10 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.005, i.e. a driver is significant if P < 0.005.
+
+ We explore the effect on power of varying the following study design choices/assumptions:
+ - Sample size (number of infected and treated individuals): 500, 1000, 1500, 2000, 2500, 3000.
+ - The proportion of these that fail to clear: 0.05, 0.1, 0.15, 0.2, 0.25, 0.3.
+ - The strength of association between each driver and failure to clear, defined as an odds ratio for binary drivers and as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2. To give a sense of what these effect sizes mean:
+   - If a binary driver has an odds ratio of 1.5,
