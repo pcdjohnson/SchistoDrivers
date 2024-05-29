@@ -215,3 +215,25 @@ if(FALSE) {
   cbind(N.per.group, power.estimate)
   
 }
+
+
+# output methods to README.md
+readme.file <- "README.md"
+
+cat("# SchistoDrivers\n\n",
+    "### Power analysis for identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
+    "The script PowerAnalysis.R estimates power across a range of model parameter assumptions and",
+    "sample sizes, detailed in comments are in the R scriptxxx. Results are output as CSV to the results",
+    "directory and plotted to schisto_power.pdf.",
+    file = readme.file)
+
+#cat(paste('<p><em>Assumption ',assume.num,'.</em><br/>',assume.text,'</p>',sep=''),sep='\n',file=assume.out,append=TRUE)
+#  cat("</body>","</html>",file=assume.out,sep="\n",append=TRUE)
+
+
+
+
+
+
+
+cat()
