@@ -148,7 +148,7 @@ power.plot <-
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot
-plot.file.name <- "schisto_power.pdf"
+plot.file.name <- "schisto_power.png"
 ggsave(plot.file.name, width = 6, height = 6)
 
 
@@ -223,10 +223,12 @@ if(FALSE) {
 readme.file <- "README.md"
 
 cat("# SchistoDrivers\n\n",
-    "### Power analysis for identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
+    "## Power analysis for identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
+    "### Summary\n\n",
     "The script PowerAnalysis.R estimates power across a range of model parameter assumptions and",
     "sample sizes, detailed in comments in the R script. Results are output as CSV to the results",
     paste0("directory and plotted to ", plot.file.name, ".\n\n"),
+    "### Methods\n\n",
     "The aim of the power analysis is to estimate power to detect drivers of praziquantel treatment",
     "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
     "where the study data is simulated and analysed multiple times under varying study design",
@@ -259,6 +261,8 @@ cat("# SchistoDrivers\n\n",
     "If the prevalence of failure to clear is 25% without the driver, it will be 33% with the driver.\n",
     "  - If we raise the odds ratio from 1.5 to 2, then the prevalences of failure to clear in the",
     "exposed population will be 9.5% relative to 5% in the unexposed population,",
-    "and 40% relative to 25% in the unexposed population\n\n.",
+    "and 40% relative to 25% in the unexposed population.\n\n",
+    "### Results\n",
+    paste0("![PowerCurve](", plot.file.name, ")"),
     file = readme.file)
 
