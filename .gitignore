@@ -46,3 +46,6 @@ po/*~
 
 # Mac hidden files
 .DS_Store
+
+# data folder
+data/
