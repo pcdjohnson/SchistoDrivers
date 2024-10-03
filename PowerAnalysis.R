@@ -224,9 +224,9 @@ cat("\n\n## Power analysis 2: Randomised control trial protocol for the effect o
     "### Methods\n\n",
     "The aim of power analysis 2 is to estimate power to detect a difference in praziquantel absorption",
     "(measured as area under the curve [AUC] of praziquantel metabolites) between three groups:\n",
-    "- people who have taken food at home;\n",
-    "- people who have brought in food;\n",
-    "- people for whom food has been provided on site.\n",
+    "- people who have taken food at home prior to praziquantel treatment;\n",
+    "- people who have brought in food to be taken prior to praziquantel treatment;\n",
+    "- people for whom food has been provided on site prior to praziquantel treatment.\n\n",
     "The null hypothesis is that mean AUC is equal across the three groups.",
     "The alternative hypothesis that mean AUC differs between the three groups.",
     "The effect size assumed here is that the group AUC means differ by",
@@ -237,7 +237,9 @@ cat("\n\n## Power analysis 2: Randomised control trial protocol for the effect o
     "The required sample size per group was calculated using the R function *power.anova.test*.",
     "\n\n",
     "### Results\n",
-    "Some results here....",
+    n, "people would be required per group in order to achieve",
+    paste0(target.power * 100, "%"), 
+    "to detect a", delta.AUC, "standard deviation difference between each of the three groups.",
     "\n\n",
     file = readme.file, append = TRUE)
 

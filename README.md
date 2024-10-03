@@ -27,11 +27,12 @@
  ### Methods
 
  The aim of power analysis 2 is to estimate power to detect a difference in praziquantel absorption (measured as area under the curve [AUC] of praziquantel metabolites) between three groups:
- - people who have taken food at home;
- - people who have brought in food;
- - people for whom food has been provided on site.
+ - people who have taken food at home prior to praziquantel treatment;
+ - people who have brought in food to be taken prior to praziquantel treatment;
+ - people for whom food has been provided on site prior to praziquantel treatment.
+
  The null hypothesis is that mean AUC is equal across the three groups. The alternative hypothesis that mean AUC differs between the three groups. The effect size assumed here is that the group AUC means differ by 0.25 standard deviations from the lowest mean to the intermediate mean, and by 0.25 standard deviations from the intermediate mean to the highest mean. Target power is 90% and the significance threshold is 0.05. The required sample size per group was calculated using the R function *power.anova.test*. 
 
  ### Results
- Some results here.... 
+ 102.2373 people would be required per group in order to achieve 90% to detect a 0.25 standard deviation difference between each of the three groups. 
 
