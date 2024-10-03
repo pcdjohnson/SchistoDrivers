@@ -23,7 +23,9 @@
    - If we raise the odds ratio from 1.5 to 2, then the prevalences of failure to clear in the exposed population will be 9.5% relative to 5% in the unexposed population, and 40% relative to 25% in the unexposed population.
 
  ### Results
- ![PowerCurve](schisto_power1.png)## Power analysis 2: Randomised control trial protocol for the effect of food prior to treatment on praziquantel absorption
+ ![PowerCurve](schisto_power1.png)
+
+## Power analysis 2: Randomised control trial protocol for the effect of food prior to treatment on praziquantel absorption
 
  ### Summary
 

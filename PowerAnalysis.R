@@ -201,7 +201,7 @@ cat("# SchistoDrivers\n\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
     file = readme.file)
 
-cat("## Power analysis 2: Randomised control trial protocol for the effect of food prior to treatment on praziquantel absorption\n\n",
+cat("\n\n## Power analysis 2: Randomised control trial protocol for the effect of food prior to treatment on praziquantel absorption\n\n",
     "### Summary\n\n",
     "The second  power analysis estimates power across a range of model parameter assumptions and",
     "sample sizes, detailed in comments in the script PowerAnalysis.R.\n\n",
