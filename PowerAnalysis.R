@@ -1,13 +1,9 @@
-###########################################################################
-# Script to estimate power to identify multiple drivers of praziquantel   #
-# treatment failure in individuals infected with schistosomiasis.         #
-#                                                                         #
-# This is a simulation-based power analysis, where the project data is    #
-# simulated and analysed multiple times under different study design      #
-# scenarios, and power is estimated as the proportion of simulated        #
-# analyses that achieve the desired outcome (e.g. detecting a true        # 
-# driver of treatment failure).                                           #
-###########################################################################
+### Summary ----
+# Script to estimate power to (1) identify multiple drivers of      
+# praziquantel treatment failure in individuals infected with
+# schistosomiasis, and (2) detect a difference in praziquantel 
+# absorption between different instructions for taking food to
+# aid absorption
 
 # Load packages
 library(ggplot2)
@@ -17,6 +13,8 @@ library(glmmTMB)
 
 # Clear objects
 rm(list = ls())
+
+#### Power analysis 1 ----
 
 # Study design options
 
@@ -158,11 +156,6 @@ readme.file <- "README.md"
 
 cat("# SchistoDrivers\n\n",
     "## Power analysis 1: identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
-    "### Summary\n\n",
-    "The first power analysis estimates power across a range of model parameter assumptions and",
-    "sample sizes, detailed in comments in the script PowerAnalysis.R.",
-    "Results are output as CSV to the results",
-    paste0("directory and plotted to ", plot.file.name, ".\n\n"),
     "### Methods\n\n",
     "The aim of power analysis 1 is to estimate power to detect drivers of praziquantel treatment",
     "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
@@ -196,17 +189,52 @@ cat("# SchistoDrivers\n\n",
     "If the prevalence of failure to clear is 25% without the driver, it will be 33% with the driver.\n",
     "  - If we raise the odds ratio from 1.5 to 2, then the prevalences of failure to clear in the",
     "exposed population will be 9.5% relative to 5% in the unexposed population,",
-    "and 40% relative to 25% in the unexposed population.\n\n",
+    "and 40% relative to 25% in the unexposed population.\n",
+    "Full details are provided in the script PowerAnalysis.R.",
+    "Results are output as CSV to the results",
+    paste0("directory and plotted to ", plot.file.name, ".\n\n"),
     "### Results\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
     file = readme.file)
 
-cat("\n\n## Power analysis 2: Randomised control trial protocol for the effect of food prior to treatment on praziquantel absorption\n\n",
-    "### Summary\n\n",
-    "The second  power analysis estimates power across a range of model parameter assumptions and",
-    "sample sizes, detailed in comments in the script PowerAnalysis.R.\n\n",
+#### Power analysis 2 ----
+
+# Trial to compare absorption of praziquantel between people who have
+#   - received food at home
+#   - brought in food
+#   - food has been provided on site
+
+#  Assumptions:
+#    No cluster effect (conditional independence between observations)
+#    Equal numbers in each group
+#    AUC is normally distributed within each group (it is)
+#    We know the SD of the AUC within each group (it's 403 units)
+#    We know what our target effect size is, i.e. the smallest effect that we want to detect
+#    alpha = 0.05 and target power = 90%.  
+
+delta.AUC <- 0.25
+target.power <- 0.9
+n <- 
+  power.anova.test(groups = 3, power = target.power, 
+                   between.var = var(c(0, delta.AUC, delta.AUC * 2)),
+                   within.var = 1, sig.level = nominal.alpha)$n
+
+cat("\n\n## Power analysis 2: Randomised control trial protocol for the effect of",
+    "food prior to treatment on praziquantel absorption\n\n",
     "### Methods\n\n",
-    "The aim of power analysis 2 is to estimate power to detect....",
+    "The aim of power analysis 2 is to estimate power to detect a difference in praziquantel absorption",
+    "(measured as area under the curve [AUC] of praziquantel metabolites) between three groups:\n",
+    "- people who have taken food at home;\n",
+    "- people who have brought in food;\n",
+    "- people for whom food has been provided on site.\n",
+    "The null hypothesis is that mean AUC is equal across the three groups.",
+    "The alternative hypothesis that mean AUC differs between the three groups.",
+    "The effect size assumed here is that the group AUC means differ by",
+    delta.AUC, "standard deviations from the lowest mean to the intermediate mean,",
+    "and by", delta.AUC, "standard deviations from the intermediate mean to the highest mean.",
+    "Target power is", paste0(target.power * 100, "%"), "and the significance threshold is",
+    paste0(nominal.alpha, "."),
+    "The required sample size per group was calculated using the R function *power.anova.test*.",
     "\n\n",
     "### Results\n",
     "Some results here....",
@@ -214,32 +242,11 @@ cat("\n\n## Power analysis 2: Randomised control trial protocol for the effect o
     file = readme.file, append = TRUE)
 
 
-### Appendix: Additional power analysis ### 
 
 if(FALSE) {
+
   
-  # Additional power analysis 
-  # Trial to compare absorption of praziquantel between people who have
-  #   - received food at home
-  #   - brought in food
-  #   - food has been provided on site
-  
-  #  Assumptions:
-  #    No cluster effect (conditional independence between observations)
-  #    Equal numbers in each group
-  #    AUC is normally distributed within each group (it is)
-  #    We know the SD of the AUC within each group (it's 403 units)
-  #    We know what our target effect size is, i.e. the smallest effect that we want to detect
-  #    alpha = 0.05 and target power = 90%.  
-  
-  delta.AUC <- seq(0.05, 1, 0.05)
-  target.power <- 0.9
-  N.per.group <- 
-    ceiling(sapply(delta.AUC, function(delta) {
-      power.anova.test(groups = 3, power = target.power, between.var = var(c(0, delta, delta * 2)), 
-                       within.var = 1)$n
-    }))
-  plot(delta.AUC, N.per.group, log = "y", type = "b")
+    
   title.text <-
     paste0("Sample size required per group for ", target.power * 100, 
            "% power at alpha = 0.05\ngiven target delta.AUC in SD units")
