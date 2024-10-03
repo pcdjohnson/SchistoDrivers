@@ -232,27 +232,20 @@ cat("\n\n## Power analysis 2: Randomised control trial protocol for the effect o
     "The effect size assumed here is that the group AUC means differ by",
     delta.AUC, "standard deviations from the lowest mean to the intermediate mean,",
     "and by", delta.AUC, "standard deviations from the intermediate mean to the highest mean.",
-    "Target power is", paste0(target.power * 100, "%"), "and the significance threshold is",
-    paste0(nominal.alpha, "."),
-    "The required sample size per group was calculated using the R function *power.anova.test*.",
+    "Target power is", paste0(target.power * 100, "%,"), 
+    "which is set higher that the standard minimal threshold of 80%.",
+    "This is justified by the likely public health benefit of finding",
+    "an optimal strategy, if it exists, for",
+    "taking food prior to praziquantel treatment.",
+    "The significance threshold is", paste0(nominal.alpha, "."),
+    "The statistical analysis method assumed is a one-way ANOVA, and the required sample",
+    "size per group was calculated using the R function *power.anova.test*.",
+    "Full details are provided in the script PowerAnalysis.R.",
     "\n\n",
     "### Results\n",
-    n, "people would be required per group in order to achieve",
+    ceiling(n), "people would be required per group in order to achieve",
     paste0(target.power * 100, "%"), 
-    "to detect a", delta.AUC, "standard deviation difference between each of the three groups.",
+    "power to detect a", delta.AUC, 
+    "standard deviation difference between each of the three groups.",
     "\n\n",
     file = readme.file, append = TRUE)
-
-
-
-if(FALSE) {
-
-  
-    
-  title.text <-
-    paste0("Sample size required per group for ", target.power * 100, 
-           "% power at alpha = 0.05\ngiven target delta.AUC in SD units")
-  title(title.text)
-  cbind(delta.AUC, N.per.group)
-  
-}
