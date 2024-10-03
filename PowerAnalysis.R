@@ -47,7 +47,7 @@ bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resista
 # Further simulation and analysis options
 
 # number of data sets to simulate
-n.sim <- 10
+n.sim <- 1000
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
 nominal.alpha <- 0.05
@@ -237,8 +237,8 @@ cat("\n\n## Power analysis 2: randomised controlled trial for the effect of",
     "Lowering the risk of a type II error in this way is justified by the likely",
     "public health benefit of finding an optimal strategy, if it exists, for",
     "taking food prior to praziquantel treatment.",
-    "The significance threshold is", paste0(nominal.alpha, "."),
-    "The statistical analysis method assumed is a one-way ANOVA, and the required sample",
+    "The null hypothesis is rejected if P <", nominal.alpha,
+    "from a one-way ANOVA. The required sample",
     "size per group was calculated using the R function *power.anova.test*.",
     "Full details are provided in the script PowerAnalysis.R.",
     "\n\n",
