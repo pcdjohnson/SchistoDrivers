@@ -152,72 +152,6 @@ plot.file.name <- "schisto_power.png"
 ggsave(plot.file.name, width = 6, height = 6)
 
 
-### Appendix: Additional power analyses ### 
-
-if(FALSE) {
-  
-  # Additional power analysis 
-  # Trial to compare absorption of praziquantel between people who have received food beforehand and those who haven’t
-  
-  #  Assumptions:
-  #    No cluster effect (conditional independence between observations)
-  #    Equal numbers in each group (this can be relaxed but usually isn’t)
-  #    AUC is normally distributed within each group
-  #    We know the SD of the AUC (or some transformation – lab measures are often positively skewed) within each group
-  #    We know what our target effect size is, i.e. the smallest effect that we want to detect = the largest effect that we’d be relaxed about not detecting.
-  #    alpha = 0.05 and target power = 80%.  
-  
-  delta.AUC <- seq(0.05, 1, 0.05)
-  N.per.group <- ceiling(sapply(delta.AUC, function(delta) power.t.test(delta = delta, sd = 1, sig.level = 0.05, power = 0.8)$n))
-  plot(delta.AUC, N.per.group, log = "y", type = "b")
-  title("Sample size required per group for 80% power at alpha = 0.05\ngiven target delta.AUC in SD units")
-  cbind(delta.AUC, N.per.group)
-  
-  # Additional power analysis for comparison of eggs per gram between two groups:
-  #   - food then praziquental
-  #   - no food then praziquental - predicting 3x higher EPG
-  unfed.effect <- 3
-  # Based on existing data mean and SD of EPG in fed subjects following treatment
-  scaling.factor <- 24 # because EPG is calculated from >1 gram of faeces
-  lambda <- 0.2128099 * scaling.factor
-  s <- 2.45669 * scaling.factor
-  theta <- lambda^2 / (s^2 - lambda) # calculate dispersion parameter from SD and mean
-  # check we get the right mean and SD
-  mean(rnbinom(100000, size = theta, mu = lambda))
-  sd(rnbinom(100000, size = theta, mu = lambda))
-  
-  # estimate power
-  power.estimate <- 
-    unlist(mclapply(N.per.group, function(N) {
-      # N <- 17
-      p.value <-
-        replicate(n.sim, {
-          dat <- expand.grid(id = 1:N, group = c("fed", "unfed"))
-          dat$lambda <- lambda * ifelse(dat$group == "fed", 1, unfed.effect)
-          dat$epg <- rnbinom(nrow(dat), size = theta, mu = dat$lambda)
-          (tab <- table(dat$epg, dat$group))
-          # if the data is unanalysable (e.g. all zeros) then p.val=1 (effectively)
-          if(any(tapply(dat$epg, dat$group, function(x) length(unique(x))) == 1)) return(1) 
-          
-          #fit <- glm.nb(epg ~ group, data = dat)
-          #coef(summary(fit))["groupunfed", "Pr(>|z|)"]
-          # ...switch from glm.nb to glmmTMB as it converges better at low N
-          fit <- glmmTMB(epg ~ group, data = dat, family = nbinom2)
-          p.val <- coef(summary(fit))$cond["groupunfed", "Pr(>|z|)"]
-          if(is.nan(p.val)) return(1) else return(p.val)
-        })
-      mean(p.value < 0.05)
-    }, mc.cores = detectCores()))
-  
-  plot(N.per.group, power.estimate, type = "b", log = "x", ylim = 0:1)
-  abline(h = 0.8, lty = 3)
-  title(paste0("Power to detect an unfed:fed ratio in EPG of ", 
-               unfed.effect, ":1\nassuming mean (SD) fed EPG = ", 
-               round(lambda, 2), " (", round(s, 2), ")\nestimated from ", n.sim, " simulated data sets"))
-  cbind(N.per.group, power.estimate)
-  
-}
-
 
 # output methods to README.md
 readme.file <- "README.md"
@@ -241,7 +175,7 @@ cat("# SchistoDrivers\n\n",
     paste(n.x, "drivers are associated with the outcome, of which", length(bin.x.p), "are binary and", 
           n.x - length(bin.x.p), "continuous."),
     paste0("The prevalences of the binary drivers are: ", paste(sort(bin.x.p), collapse = ", "), ","),
-    "representing drivers such as co-infection (HIV, soil-transmitted helminths, malaria) and",
+    "representing drivers such as co-infection (soil-transmitted helminths, malaria) and",
     "hybrid/resistance presence).\n",
     paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
     "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
@@ -266,3 +200,77 @@ cat("# SchistoDrivers\n\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
     file = readme.file)
 
+
+### Appendix: Additional power analyses ### 
+
+if(FALSE) {
+  
+  # Additional power analysis 
+  # Trial to compare absorption of praziquantel between people who have
+  #   - received food at home
+  #   - brought in food
+  #   - food has been provided on site
+  
+  #  Assumptions:
+  #    No cluster effect (conditional independence between observations)
+  #    Equal numbers in each group
+  #    AUC is normally distributed within each group (it is)
+  #    We know the SD of the AUC within each group (it's 403 units)
+  #    We know what our target effect size is, i.e. the smallest effect that we want to detect
+  #    alpha = 0.05 and target power = 80%.  
+  
+  delta.AUC <- seq(0.05, 1, 0.05)
+  N.per.group <- 
+    ceiling(sapply(delta.AUC, function(delta) {
+      power.anova.test(groups = 3, power = 0.9, between.var = var(c(0, delta, delta * 2)), 
+                       within.var = 1)$n
+    }))
+  plot(delta.AUC, N.per.group, log = "y", type = "b")
+  title("Sample size required per group for 80% power at alpha = 0.05\ngiven target delta.AUC in SD units")
+  cbind(delta.AUC, N.per.group)
+  
+  
+  # Additional power analysis for comparison of eggs per gram between the three groups:
+  epg.effect <- 3
+  # Based on existing data mean and SD of EPG in fed subjects following treatment
+  scaling.factor <- 24 # because EPG is calculated from >1 gram of faeces
+  lambda <- 0.2128099 * scaling.factor
+  s <- 2.45669 * scaling.factor
+  theta <- lambda^2 / (s^2 - lambda) # calculate dispersion parameter from SD and mean
+  # check we get the right mean and SD
+  mean(rnbinom(100000, size = theta, mu = lambda))
+  sd(rnbinom(100000, size = theta, mu = lambda))
+
+    
+  # estimate power
+  power.estimate <- 
+    unlist(mclapply(N.per.group, function(N) {
+      # N <- 17
+      p.value <-
+        replicate(n.sim, {
+          dat <- expand.grid(id = 1:N, group = c("home", "brought", "provided"))
+          dat$lambda <- lambda * (4 - as.numeric(dat$group))
+          dat$epg <- rnbinom(nrow(dat), size = theta, mu = dat$lambda)
+          (tab <- table(dat$epg, dat$group))
+          # if the data is unanalysable (e.g. all zeros) then p.val=1 (effectively)
+          if(any(tapply(dat$epg, dat$group, function(x) length(unique(x))) == 1)) return(1) 
+          
+          #fit <- glm.nb(epg ~ group, data = dat)
+          #coef(summary(fit))["groupunfed", "Pr(>|z|)"]
+          # ...switch from glm.nb to glmmTMB as it converges better at low N
+          fit <- glmmTMB(epg ~ group, data = dat, family = nbinom2)
+          fit0 <- update(fit, ~ 1)
+          p.val <- anova(fit0, fit)[2, "Pr(>Chisq)"]
+          if(is.nan(p.val)) return(1) else return(p.val)
+        })
+      mean(p.value < 0.05)
+    }, mc.cores = detectCores()))
+  
+  plot(N.per.group, power.estimate, type = "b", log = "x", ylim = 0:1)
+  abline(h = 0.8, lty = 3)
+  title(paste0("Power to detect an unfed:fed ratio in EPG of ", 
+               epg.effect, "x\nassuming mean (SD) fed EPG = ", 
+               round(lambda, 2), " (", round(s, 2), ")\nestimated from ", n.sim, " simulated data sets"))
+  cbind(N.per.group, power.estimate)
+
+}
