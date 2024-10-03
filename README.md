@@ -17,12 +17,13 @@
  - The strength of association between each driver and failure to clear, defined as an odds ratio for binary drivers and as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2. To give a sense of what these effect sizes mean:
    - If a binary driver has an odds ratio of 1.5, then if 5% of people fail to clear in the absence of a driver, that proportion will be 7.3% among those who are exposed to the driver. If the prevalence of failure to clear is 25% without the driver, it will be 33% with the driver.
    - If we raise the odds ratio from 1.5 to 2, then the prevalences of failure to clear in the exposed population will be 9.5% relative to 5% in the unexposed population, and 40% relative to 25% in the unexposed population.
+
  Full details are provided in the script PowerAnalysis.R. Results are output as CSV to the results directory and plotted to schisto_power1.png.
 
  ### Results
  ![PowerCurve](schisto_power1.png)
 
-## Power analysis 2: Randomised control trial protocol for the effect of food prior to treatment on praziquantel absorption
+## Power analysis 2: randomised controlled trial for the effect of food prior to treatment on praziquantel absorption
 
  ### Methods
 
@@ -31,7 +32,7 @@
  - people who have brought in food to be taken prior to praziquantel treatment;
  - people for whom food has been provided on site prior to praziquantel treatment.
 
- The null hypothesis is that mean AUC is equal across the three groups. The alternative hypothesis that mean AUC differs between the three groups. The effect size assumed here is that the group AUC means differ by 0.25 standard deviations from the lowest mean to the intermediate mean, and by 0.25 standard deviations from the intermediate mean to the highest mean. Target power is 90%, which is set higher that the standard minimal threshold of 80%. This is justified by the likely public health benefit of finding an optimal strategy, if it exists, for taking food prior to praziquantel treatment. The significance threshold is 0.05. The statistical analysis method assumed is a one-way ANOVA, and the required sample size per group was calculated using the R function *power.anova.test*. Full details are provided in the script PowerAnalysis.R. 
+ The null hypothesis is that mean AUC is equal across the three groups. The alternative hypothesis is that mean AUC differs between the three groups. The effect size assumed here is that the group AUC means differ by 0.25 standard deviations from the lowest mean to the intermediate mean, and by 0.25 standard deviations from the intermediate mean to the highest mean. Target power is 90%, which is set higher that the standard minimal threshold of 80%. Lowering the risk of a type II error in this way is justified by the likely public health benefit of finding an optimal strategy, if it exists, for taking food prior to praziquantel treatment. The significance threshold is 0.05. The statistical analysis method assumed is a one-way ANOVA, and the required sample size per group was calculated using the R function *power.anova.test*. Full details are provided in the script PowerAnalysis.R. 
 
  ### Results
  103 people would be required per group in order to achieve 90% power to detect a 0.25 standard deviation difference between each of the three groups. 
