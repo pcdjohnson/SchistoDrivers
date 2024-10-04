@@ -40,11 +40,13 @@ n.AUC <-
                    between.var = var(c(0, delta.AUC, delta.AUC * 2)),
                    within.var = 1, sig.level = nominal.alpha)$n
 
+# output methods and results to README.md
+
 cat("# SchistoDrivers\n\n",
     "## Power analysis 1: randomised controlled trial for the effect of",
     "food prior to treatment on praziquantel absorption (Rapid Answer Project 1) \n\n",
     "### Methods\n\n",
-    "The aim of power analysis 2 is to estimate power to detect a difference in praziquantel absorption",
+    "The aim of this power analysis is to estimate power to detect a difference in praziquantel absorption",
     "(measured as area under the curve [AUC] of praziquantel metabolites) between three groups:\n",
     "- people who have taken food at home prior to praziquantel treatment;\n",
     "- people who have brought in food to be taken prior to praziquantel treatment;\n",
@@ -62,7 +64,8 @@ cat("# SchistoDrivers\n\n",
     "The null hypothesis is rejected if P <", nominal.alpha,
     "from a one-way ANOVA. The required sample",
     "size per group was calculated using the R function *power.anova.test*.",
-    "Full details are provided in the script PowerAnalysis.R.",
+    "Full details are provided in the script",
+    "[PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
     "\n\n",
     "### Results\n",
     ceiling(n.AUC), "people would be required per group in order to achieve",
@@ -72,9 +75,29 @@ cat("# SchistoDrivers\n\n",
     "\n\n",
     file = readme.file, append = FALSE)
 
-
-
 #### Power analysis 2 ----
+# RAP2: Miracidial trial to enable time and money saving mass storage in the field
+# (Rapid Answer Project 2), unlocking greater flexibility for picking specific miracidia
+# for individual and community-level genetic follow ups. 
+
+n.mira <- 28
+p.haplo <- 0.05
+
+cat("## Power analysis 2: Miracidial trial to enable time and money",
+    "saving mass storage in the field (Rapid Answer Project 2) \n\n",
+    "The aim of this power analysis is to estimate the power to detect hybrid or resistant haplotypes",
+    "present at at least", paste0(p.haplo * 100, "%"), "frequency in a population of miracidia.",
+    "Assuming complete admixture within each community, by sampling", 
+    n.mira, "miracidia ", paste0("(", 2 * n.mira, " haplotypes)"),
+    "we have a", paste0(round(100 * (1 - (1 - p.haplo)^(2 * n.mira)), 1), "%"), 
+    "chance of observing a hybrid or resistant haplotypes present at", paste0(p.haplo * 100, "%"), 
+    "frequency in the population.",
+    "See the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R) for details.",
+    "\n\n",
+    file = readme.file, append = TRUE)
+
+
+#### Power analysis 3 ----
 
 # Study design options
 
@@ -107,7 +130,7 @@ bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resista
 # Further simulation and analysis options
 
 # number of data sets to simulate
-n.sim <- 100
+n.sim <- 10
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
 alpha <- c(nominal.alpha/n.x)
@@ -208,11 +231,9 @@ power.plot
 plot.file.name <- "schisto_power1.png"
 ggsave(plot.file.name, width = 6, height = 6)
 
+# output methods and results to README.md
 
-
-# output methods to README.md
-
-cat("\n\n## Power analysis 2: identifying drivers of schistosomiasis praziquantel treatment failure (main study)\n\n",
+cat("\n\n## Power analysis 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment",
     "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
@@ -247,10 +268,11 @@ cat("\n\n## Power analysis 2: identifying drivers of schistosomiasis praziquante
     "  - If we raise the odds ratio from 1.5 to 2, then the prevalences of failure to clear in the",
     "exposed population will be 9.5% relative to 5% in the unexposed population,",
     "and 40% relative to 25% in the unexposed population.\n\n",
-    "Full details are provided in the script PowerAnalysis.R.",
+    "Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
     "Results are output as CSV to the results",
     paste0("directory and plotted to ", plot.file.name, ".\n\n"),
     "### Results\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
-    file = readme.file, append = FALSE)
+    file = readme.file, append = TRUE)
+
 

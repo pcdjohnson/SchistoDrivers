@@ -1,10 +1,30 @@
+# SchistoDrivers
 
-
-## Power analysis 2: identifying drivers of schistosomiasis praziquantel treatment failure (main study)
+ ## Power analysis 1: randomised controlled trial for the effect of food prior to treatment on praziquantel absorption (Rapid Answer Project 1) 
 
  ### Methods
 
- The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment failure in individuals infected with schistosomiasis. This is a simulation-based power analysis, where the study data is simulated and analysed multiple times under varying study design scenarios, and power is estimated as the proportion of simulated analyses that achieve the desired outcome (detecting a true driver of treatment failure). The association between the outcome (treatment failure) and each driver is estimated and tested in a multivariable GLM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 100 simulated data analyses per scenario.
+ The aim of this power analysis is to estimate power to detect a difference in praziquantel absorption (measured as area under the curve [AUC] of praziquantel metabolites) between three groups:
+ - people who have taken food at home prior to praziquantel treatment;
+ - people who have brought in food to be taken prior to praziquantel treatment;
+ - people for whom food has been provided on site prior to praziquantel treatment.
+
+ The null hypothesis is that mean AUC is equal across the three groups. The alternative hypothesis is that mean AUC differs between the three groups. The effect size assumed here is that the group AUC means differ by 0.25 standard deviations from the lowest mean to the intermediate mean, and by 0.25 standard deviations from the intermediate mean to the highest mean. Target power is 90%, which is set higher that the standard minimal threshold of 80%. Lowering the risk of a type II error in this way is justified by the likely public health benefit of finding an optimal strategy, if it exists, for taking food prior to praziquantel treatment. The null hypothesis is rejected if P < 0.05 from a one-way ANOVA. The required sample size per group was calculated using the R function *power.anova.test*. Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). 
+
+ ### Results
+ 103 people would be required per group in order to achieve 90% power to detect a 0.25 standard deviation difference between each of the three groups. 
+
+## Power analysis 2: Miracidial trial to enable time and money saving mass storage in the field (Rapid Answer Project 2) 
+
+ The aim of this power analysis is to estimate the power to detect hybrid or resistant haplotypes present at at least 5% frequency in a population of miracidia. Assuming complete admixture within each community, by sampling 28 miracidia  (56 haplotypes) we have a 94.3% chance of observing a hybrid or resistant haplotypes present at 5% frequency in the population. See the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R) for details. 
+
+
+
+## Power analysis 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)
+
+ ### Methods
+
+ The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment failure in individuals infected with schistosomiasis. This is a simulation-based power analysis, where the study data is simulated and analysed multiple times under varying study design scenarios, and power is estimated as the proportion of simulated analyses that achieve the desired outcome (detecting a true driver of treatment failure). The association between the outcome (treatment failure) and each driver is estimated and tested in a multivariable GLM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 10 simulated data analyses per scenario.
 
  The following assumptions are made:
 - 10 drivers are associated with the outcome, of which 4 are binary and 6 continuous. The prevalences of the binary drivers are: 0.2, 0.2, 0.2, 0.5, representing drivers such as co-infection (soil-transmitted helminths, malaria) and hybrid/resistance presence).
@@ -18,7 +38,7 @@
    - If a binary driver has an odds ratio of 1.5, then if 5% of people fail to clear in the absence of a driver, that proportion will be 7.3% among those who are exposed to the driver. If the prevalence of failure to clear is 25% without the driver, it will be 33% with the driver.
    - If we raise the odds ratio from 1.5 to 2, then the prevalences of failure to clear in the exposed population will be 9.5% relative to 5% in the unexposed population, and 40% relative to 25% in the unexposed population.
 
- Full details are provided in the script PowerAnalysis.R. Results are output as CSV to the results directory and plotted to schisto_power1.png.
+ Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the results directory and plotted to schisto_power1.png.
 
  ### Results
  ![PowerCurve](schisto_power1.png)
