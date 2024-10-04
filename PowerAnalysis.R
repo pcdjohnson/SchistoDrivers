@@ -14,7 +14,67 @@ library(glmmTMB)
 # Clear objects
 rm(list = ls())
 
+# Global settings
+readme.file <- "README.md" # methods and results output file
+nominal.alpha <- 0.05 # significance threshold
+
 #### Power analysis 1 ----
+
+# Trial to compare absorption of praziquantel between people who have
+#   - received food at home
+#   - brought in food
+#   - food has been provided on site
+
+#  Assumptions:
+#    No cluster effect (conditional independence between observations)
+#    Equal numbers in each group
+#    AUC is normally distributed within each group (it is)
+#    We know the SD of the AUC within each group (it's 403 units)
+#    We know what our target effect size is, i.e. the smallest effect that we want to detect
+#    alpha = 0.05 and target power = 90%.  
+
+delta.AUC <- 0.25
+target.power.AUC <- 0.9
+n.AUC <- 
+  power.anova.test(groups = 3, power = target.power.AUC, 
+                   between.var = var(c(0, delta.AUC, delta.AUC * 2)),
+                   within.var = 1, sig.level = nominal.alpha)$n
+
+cat("# SchistoDrivers\n\n",
+    "## Power analysis 1: randomised controlled trial for the effect of",
+    "food prior to treatment on praziquantel absorption (Rapid Answer Project 1) \n\n",
+    "### Methods\n\n",
+    "The aim of power analysis 2 is to estimate power to detect a difference in praziquantel absorption",
+    "(measured as area under the curve [AUC] of praziquantel metabolites) between three groups:\n",
+    "- people who have taken food at home prior to praziquantel treatment;\n",
+    "- people who have brought in food to be taken prior to praziquantel treatment;\n",
+    "- people for whom food has been provided on site prior to praziquantel treatment.\n\n",
+    "The null hypothesis is that mean AUC is equal across the three groups.",
+    "The alternative hypothesis is that mean AUC differs between the three groups.",
+    "The effect size assumed here is that the group AUC means differ by",
+    delta.AUC, "standard deviations from the lowest mean to the intermediate mean,",
+    "and by", delta.AUC, "standard deviations from the intermediate mean to the highest mean.",
+    "Target power is", paste0(target.power.AUC * 100, "%,"), 
+    "which is set higher that the standard minimal threshold of 80%.",
+    "Lowering the risk of a type II error in this way is justified by the likely",
+    "public health benefit of finding an optimal strategy, if it exists, for",
+    "taking food prior to praziquantel treatment.",
+    "The null hypothesis is rejected if P <", nominal.alpha,
+    "from a one-way ANOVA. The required sample",
+    "size per group was calculated using the R function *power.anova.test*.",
+    "Full details are provided in the script PowerAnalysis.R.",
+    "\n\n",
+    "### Results\n",
+    ceiling(n.AUC), "people would be required per group in order to achieve",
+    paste0(target.power.AUC * 100, "%"), 
+    "power to detect a", delta.AUC, 
+    "standard deviation difference between each of the three groups.",
+    "\n\n",
+    file = readme.file, append = FALSE)
+
+
+
+#### Power analysis 2 ----
 
 # Study design options
 
@@ -47,10 +107,9 @@ bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resista
 # Further simulation and analysis options
 
 # number of data sets to simulate
-n.sim <- 1000
+n.sim <- 100
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
-nominal.alpha <- 0.05
 alpha <- c(nominal.alpha/n.x)
 
 # Make table of all parameter and design combinations
@@ -152,12 +211,10 @@ ggsave(plot.file.name, width = 6, height = 6)
 
 
 # output methods to README.md
-readme.file <- "README.md"
 
-cat("# SchistoDrivers\n\n",
-    "## Power analysis 1: identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
+cat("\n\n## Power analysis 2: identifying drivers of schistosomiasis praziquantel treatment failure (main study)\n\n",
     "### Methods\n\n",
-    "The aim of power analysis 1 is to estimate power to detect drivers of praziquantel treatment",
+    "The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment",
     "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
     "where the study data is simulated and analysed multiple times under varying study design",
     "scenarios, and power is estimated as the proportion of simulated analyses that achieve the",
@@ -195,57 +252,5 @@ cat("# SchistoDrivers\n\n",
     paste0("directory and plotted to ", plot.file.name, ".\n\n"),
     "### Results\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
-    file = readme.file)
+    file = readme.file, append = FALSE)
 
-#### Power analysis 2 ----
-
-# Trial to compare absorption of praziquantel between people who have
-#   - received food at home
-#   - brought in food
-#   - food has been provided on site
-
-#  Assumptions:
-#    No cluster effect (conditional independence between observations)
-#    Equal numbers in each group
-#    AUC is normally distributed within each group (it is)
-#    We know the SD of the AUC within each group (it's 403 units)
-#    We know what our target effect size is, i.e. the smallest effect that we want to detect
-#    alpha = 0.05 and target power = 90%.  
-
-delta.AUC <- 0.25
-target.power <- 0.9
-n <- 
-  power.anova.test(groups = 3, power = target.power, 
-                   between.var = var(c(0, delta.AUC, delta.AUC * 2)),
-                   within.var = 1, sig.level = nominal.alpha)$n
-
-cat("\n\n## Power analysis 2: randomised controlled trial for the effect of",
-    "food prior to treatment on praziquantel absorption\n\n",
-    "### Methods\n\n",
-    "The aim of power analysis 2 is to estimate power to detect a difference in praziquantel absorption",
-    "(measured as area under the curve [AUC] of praziquantel metabolites) between three groups:\n",
-    "- people who have taken food at home prior to praziquantel treatment;\n",
-    "- people who have brought in food to be taken prior to praziquantel treatment;\n",
-    "- people for whom food has been provided on site prior to praziquantel treatment.\n\n",
-    "The null hypothesis is that mean AUC is equal across the three groups.",
-    "The alternative hypothesis is that mean AUC differs between the three groups.",
-    "The effect size assumed here is that the group AUC means differ by",
-    delta.AUC, "standard deviations from the lowest mean to the intermediate mean,",
-    "and by", delta.AUC, "standard deviations from the intermediate mean to the highest mean.",
-    "Target power is", paste0(target.power * 100, "%,"), 
-    "which is set higher that the standard minimal threshold of 80%.",
-    "Lowering the risk of a type II error in this way is justified by the likely",
-    "public health benefit of finding an optimal strategy, if it exists, for",
-    "taking food prior to praziquantel treatment.",
-    "The null hypothesis is rejected if P <", nominal.alpha,
-    "from a one-way ANOVA. The required sample",
-    "size per group was calculated using the R function *power.anova.test*.",
-    "Full details are provided in the script PowerAnalysis.R.",
-    "\n\n",
-    "### Results\n",
-    ceiling(n), "people would be required per group in order to achieve",
-    paste0(target.power * 100, "%"), 
-    "power to detect a", delta.AUC, 
-    "standard deviation difference between each of the three groups.",
-    "\n\n",
-    file = readme.file, append = TRUE)
