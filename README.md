@@ -12,12 +12,12 @@
  The null hypothesis is that mean AUC is equal across the three groups. The alternative hypothesis is that mean AUC differs between the three groups. The effect size assumed here is that the group AUC means differ by 0.25 standard deviations from the lowest mean to the intermediate mean, and by 0.25 standard deviations from the intermediate mean to the highest mean. Target power is 90%, which is set higher that the standard minimal threshold of 80%. Lowering the risk of a type II error in this way is justified by the likely public health benefit of finding an optimal strategy, if it exists, for taking food prior to praziquantel treatment. The null hypothesis is rejected if P < 0.05 from a one-way ANOVA. The required sample size per group was calculated using the R function *power.anova.test*. Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). 
 
  ### Results
- 103 people would be required per group in order to achieve 90% power to detect a 0.25 standard deviation difference between each of the three groups. 
+ 103 people would be required per group in order to achieve 90% power to detect a 0.25 standard deviation difference between each of the three groups. For context, we note that [Kovač et al. (2018)](https://doi.org/10.1128/aac.02253-17) detected significant differences between groups of children treated with different praziquantel doses in both metabolite AUC and schistosome clearance rate with per-group sample sizes ranging from 29 to 47. Therefore we expect that 103 per group will give high sensitivity to detect the effects of different strategies for eating prior to treatment. 
+
 
 ## Sample size calculation 2: Miracidial trial to enable time and money saving mass storage in the field (Rapid Answer Project 2) 
 
  The aim of this power analysis is to estimate the power to detect hybrid or resistant haplotypes present at at least 5% frequency in a population of miracidia. Assuming complete admixture within each community, by sampling 28 miracidia  (56 haplotypes) we have a 94.3% chance of observing hybrid or resistant haplotypes present at 5% frequency in the population. See the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R) for details. 
-
 
 
 ## Sample size calculation 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)
@@ -41,4 +41,6 @@
  Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the results directory and plotted to schisto_power1.png.
 
  ### Results
- ![PowerCurve](schisto_power1.png)
+ ![PowerCurve](schisto_power1.png) 
+
+

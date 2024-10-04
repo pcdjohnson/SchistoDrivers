@@ -72,7 +72,12 @@ cat("# SchistoDrivers\n\n",
     paste0(target.power.AUC * 100, "%"), 
     "power to detect a", delta.AUC, 
     "standard deviation difference between each of the three groups.",
-    "\n\n",
+    "For context, we note that [Kovač et al. (2018)](https://doi.org/10.1128/aac.02253-17)",
+    "detected significant differences between groups of children treated with different",
+    "praziquantel doses in both metabolite AUC and schistosome clearance rate with",
+    "per-group sample sizes ranging from 29 to 47. Therefore we expect that", ceiling(n.AUC),
+    "per group will give high sensitivity to detect the effects of different strategies for eating prior to treatment.",
+    "\n\n\n",
     file = readme.file, append = FALSE)
 
 #### Sample size calculation 2 ----
@@ -93,7 +98,7 @@ cat("## Sample size calculation 2: Miracidial trial to enable time and money",
     "chance of observing hybrid or resistant haplotypes present at", paste0(p.haplo * 100, "%"), 
     "frequency in the population.",
     "See the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R) for details.",
-    "\n\n",
+    "\n\n\n",
     file = readme.file, append = TRUE)
 
 
@@ -233,7 +238,7 @@ ggsave(plot.file.name, width = 6, height = 6)
 
 # output methods and results to README.md
 
-cat("\n\n## Sample size calculation 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)\n\n",
+cat("## Sample size calculation 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment",
     "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
@@ -268,11 +273,13 @@ cat("\n\n## Sample size calculation 3: identifying drivers of schistosomiasis pr
     "  - If we raise the odds ratio from 1.5 to 2, then the prevalences of failure to clear in the",
     "exposed population will be 9.5% relative to 5% in the unexposed population,",
     "and 40% relative to 25% in the unexposed population.\n\n",
-    "Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
+    "Full details are provided in the script",
+    "[PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
     "Results are output as CSV to the results",
     paste0("directory and plotted to ", plot.file.name, ".\n\n"),
     "### Results\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
+    "\n\n\n",
     file = readme.file, append = TRUE)
 
 
