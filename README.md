@@ -1,6 +1,6 @@
 # SchistoDrivers
 
- ## Power analysis 1: randomised controlled trial for the effect of food prior to treatment on praziquantel absorption (Rapid Answer Project 1) 
+ ## Sample size calculation 1: randomised controlled trial for the effect of food prior to treatment on praziquantel absorption (Rapid Answer Project 1) 
 
  ### Methods
 
@@ -14,13 +14,13 @@
  ### Results
  103 people would be required per group in order to achieve 90% power to detect a 0.25 standard deviation difference between each of the three groups. 
 
-## Power analysis 2: Miracidial trial to enable time and money saving mass storage in the field (Rapid Answer Project 2) 
+## Sample size calculation 2: Miracidial trial to enable time and money saving mass storage in the field (Rapid Answer Project 2) 
 
- The aim of this power analysis is to estimate the power to detect hybrid or resistant haplotypes present at at least 5% frequency in a population of miracidia. Assuming complete admixture within each community, by sampling 28 miracidia  (56 haplotypes) we have a 94.3% chance of observing a hybrid or resistant haplotypes present at 5% frequency in the population. See the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R) for details. 
+ The aim of this power analysis is to estimate the power to detect hybrid or resistant haplotypes present at at least 5% frequency in a population of miracidia. Assuming complete admixture within each community, by sampling 28 miracidia  (56 haplotypes) we have a 94.3% chance of observing hybrid or resistant haplotypes present at 5% frequency in the population. See the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R) for details. 
 
 
 
-## Power analysis 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)
+## Sample size calculation 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)
 
  ### Methods
 

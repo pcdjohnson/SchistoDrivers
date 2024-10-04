@@ -1,4 +1,4 @@
-### Summary ----
+### Overview ----
 # Script to estimate power to (1) identify multiple drivers of      
 # praziquantel treatment failure in individuals infected with
 # schistosomiasis, and (2) detect a difference in praziquantel 
@@ -18,7 +18,7 @@ rm(list = ls())
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
 
-#### Power analysis 1 ----
+#### Sample size calculation 1 ----
 
 # Trial to compare absorption of praziquantel between people who have
 #   - received food at home
@@ -43,7 +43,7 @@ n.AUC <-
 # output methods and results to README.md
 
 cat("# SchistoDrivers\n\n",
-    "## Power analysis 1: randomised controlled trial for the effect of",
+    "## Sample size calculation 1: randomised controlled trial for the effect of",
     "food prior to treatment on praziquantel absorption (Rapid Answer Project 1) \n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect a difference in praziquantel absorption",
@@ -75,7 +75,7 @@ cat("# SchistoDrivers\n\n",
     "\n\n",
     file = readme.file, append = FALSE)
 
-#### Power analysis 2 ----
+#### Sample size calculation 2 ----
 # RAP2: Miracidial trial to enable time and money saving mass storage in the field
 # (Rapid Answer Project 2), unlocking greater flexibility for picking specific miracidia
 # for individual and community-level genetic follow ups. 
@@ -83,21 +83,21 @@ cat("# SchistoDrivers\n\n",
 n.mira <- 28
 p.haplo <- 0.05
 
-cat("## Power analysis 2: Miracidial trial to enable time and money",
+cat("## Sample size calculation 2: Miracidial trial to enable time and money",
     "saving mass storage in the field (Rapid Answer Project 2) \n\n",
     "The aim of this power analysis is to estimate the power to detect hybrid or resistant haplotypes",
     "present at at least", paste0(p.haplo * 100, "%"), "frequency in a population of miracidia.",
     "Assuming complete admixture within each community, by sampling", 
     n.mira, "miracidia ", paste0("(", 2 * n.mira, " haplotypes)"),
     "we have a", paste0(round(100 * (1 - (1 - p.haplo)^(2 * n.mira)), 1), "%"), 
-    "chance of observing a hybrid or resistant haplotypes present at", paste0(p.haplo * 100, "%"), 
+    "chance of observing hybrid or resistant haplotypes present at", paste0(p.haplo * 100, "%"), 
     "frequency in the population.",
     "See the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R) for details.",
     "\n\n",
     file = readme.file, append = TRUE)
 
 
-#### Power analysis 3 ----
+#### Sample size calculation 3 ----
 
 # Study design options
 
@@ -233,7 +233,7 @@ ggsave(plot.file.name, width = 6, height = 6)
 
 # output methods and results to README.md
 
-cat("\n\n## Power analysis 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)\n\n",
+cat("\n\n## Sample size calculation 3: identifying drivers of schistosomiasis praziquantel treatment failure (main study)\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment",
     "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
