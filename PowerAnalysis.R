@@ -135,7 +135,7 @@ bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resista
 # Further simulation and analysis options
 
 # number of data sets to simulate
-n.sim <- 10
+n.sim <- 1000
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
 alpha <- c(nominal.alpha/n.x)
