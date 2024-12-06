@@ -125,12 +125,19 @@ r <- c(0.25)
 
 # How many drivers?
 # Continuous drivers x 6 (generic, but could be PK, genetic SNP score, etc)
-# 4 binary drivers
-# Total number of drivers:
-n.x <- 10
+n.cont <- 6
 
+# 4 binary drivers
 # For the binary drivers, what are their proportions?
-bin.x.p <- c(0.2, 0.5, 0.2, 0.2) # HIV 20%, malaria 50%, STH 20%, hybrid/resistance presence 20%
+# HIV 20%, malaria 50%, STH 20%, hybrid/resistance presence 20%
+bin.x.p <- 
+  c(HIV = 0.2, 
+    malaria = 0.5, 
+    `soil-transmitted helminths` = 0.2, 
+    `hybrid/resistance presence` = 0.2)[c(1, 4)] 
+
+# Total number of drivers:
+n.x <- n.cont + length(bin.x.p)
 
 # Further simulation and analysis options
 
@@ -250,10 +257,9 @@ cat("## Sample size calculation 3: identifying drivers of schistosomiasis praziq
     paste("with the outcome, averaged across", n.sim, "simulated data analyses per scenario.\n\n"),
     "The following assumptions are made:\n-",
     paste(n.x, "drivers are associated with the outcome, of which", length(bin.x.p), "are binary and", 
-          n.x - length(bin.x.p), "continuous."),
-    paste0("The prevalences of the binary drivers are: ", paste(sort(bin.x.p), collapse = ", "), ","),
-    "representing drivers such as co-infection (soil-transmitted helminths, malaria) and",
-    "hybrid/resistance presence).\n",
+          n.cont, "continuous."),
+    paste0("The prevalences of the binary drivers are: ", paste(bin.x.p, collapse = ", "), ","),
+    "representing ", paste(names(bin.x.p), collapse = ", "), ".\n",
     paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
     "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
     "and neglecting them will give optimistic power estimates.\n",

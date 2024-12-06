@@ -27,9 +27,9 @@
  The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment failure in individuals infected with schistosomiasis. This is a simulation-based power analysis, where the study data is simulated and analysed multiple times under varying study design scenarios, and power is estimated as the proportion of simulated analyses that achieve the desired outcome (detecting a true driver of treatment failure). The association between the outcome (treatment failure) and each driver is estimated and tested in a multivariable GLM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 1000 simulated data analyses per scenario.
 
  The following assumptions are made:
-- 10 drivers are associated with the outcome, of which 4 are binary and 6 continuous. The prevalences of the binary drivers are: 0.2, 0.2, 0.2, 0.5, representing drivers such as co-infection (soil-transmitted helminths, malaria) and hybrid/resistance presence).
+- 8 drivers are associated with the outcome, of which 2 are binary and 6 continuous. The prevalences of the binary drivers are: 0.2, 0.2, representing  HIV, hybrid/resistance presence .
  - The drivers are correlated with each other, with a common correlation coefficient of 0.25. We don’t know what the true correlation is among drivers, but moderate correlations are likely and neglecting them will give optimistic power estimates.
- - In order to control inflation of the number of false positive results due to multiple testing of 10 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.005, i.e. a driver is significant if P < 0.005.
+ - In order to control inflation of the number of false positive results due to multiple testing of 8 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.00625, i.e. a driver is significant if P < 0.00625.
 
  We explore the effect on power of varying the following study design choices/assumptions:
  - Sample size (number of infected and treated individuals): 500, 1000, 1500, 2000, 2500, 3000.
