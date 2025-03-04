@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 2000 # number of data sets to simulate (divided by 2 for the GLMM analysis)
+n.sim <- 1000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size calculation 1 ----
 
@@ -109,7 +109,7 @@ cat("## Sample size calculation 2: Miracidial trial to enable time and money",
 # Study design options
 
 # Total sample size
-n <- seq(500, 3000, 500)
+n <- seq(1000, 3000, 500)
 
 # Model parameters
 
@@ -291,13 +291,13 @@ cat("## Sample size calculation 3: identifying drivers of schistosomiasis praziq
 #### Sample size calculation 4 ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha")
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
 
-# Total sample size
-n <- seq(500, 2000, 500)
+# Total sample size - already defined
+n
 
 # ...divided among n.communities
 n.communities <- c(25, 50, 100)
@@ -311,11 +311,13 @@ p <- c(0.1, 0.5)
 community.var <- 2.73 # estimated from RP's data
 
 # odds ratio per binary predictor, or per SD for continuous predictors
-or <- seq(1, 2, 0.25) 
+# already defined:
+or
 
 # how correlated are predictors (because abs(r) > 0 reduces power,
 # and it would be unrealistic to assume zero correlation)
-r <- c(0.25) 
+# already defined:
+r 
 
 # Choose candidate drivers:
 
@@ -431,7 +433,8 @@ write.csv(par.tab, file.name, row.names = FALSE, quote = FALSE)
 # Make plots of results
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
 par.tab$n <- factor(par.tab$n, rev(n))
-par.tab$n.communities <- factor(paste("N communities =", par.tab$n.communities))
+par.tab$n.communities <- factor(paste("N communities =", par.tab$n.communities), 
+                                paste("N communities =", (n.communities)))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 
@@ -453,6 +456,7 @@ power.plot.file.name <- "schisto_power4.png"
 ggsave(power.plot.file.name, width = 6, height = 6)
 
 # plot margin of error
+par.tab$n <- factor(par.tab$n, rev(levels(par.tab$n)))
 moe.plot <-
   ggplot(data = par.tab, aes(x = or, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
   geom_point() +
@@ -487,7 +491,7 @@ cat("## Sample size calculation 4: identifying community-level drivers of schist
     paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
     "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
     "and neglecting them will give optimistic power estimates.\n",
-    paste0("- Infection prevalence varies among communities with a logit-normal variance of ", 
+    paste0("- Log odds of infection prevalence varies among communities with a variance of ", 
            community.var, ".\n"),
     "- In order to control inflation of the number of false positive results due to multiple testing of",
     n.x, "drivers, the significance threshold of", nominal.alpha,
