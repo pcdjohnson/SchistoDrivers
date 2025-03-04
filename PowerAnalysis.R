@@ -420,10 +420,10 @@ run.time <- Sys.time() - start.time
 print(run.time)
 
 # Estimate power as the proportion of the n.x drivers with p < alpha
-par.tab$prop.drivers <- sim.res["n.drivers.sig", ]/n.x
+par.tab$prop.drivers <- round(sim.res["n.drivers.sig", ]/n.x, 5)
 
 # Estimate mean margin of error of odds ratio estimates 
-par.tab$or.margin.of.error <- sim.res["MoE", ]
+par.tab$or.margin.of.error <- round(sim.res["MoE", ], 5)
 
 # Export results to CSV file with time stamp in file name
 file.name <- paste0("results/schisto_power4_", 
