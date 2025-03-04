@@ -49,3 +49,6 @@ po/*~
 
 # data folder
 data/
+
+# spare code
+PowerAnalysis2.R

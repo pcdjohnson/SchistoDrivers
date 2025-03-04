@@ -10,6 +10,7 @@ library(ggplot2)
 library(parallel)
 library(MASS)
 library(glmmTMB)
+library(GLMMmisc) # from https://github.com/pcdjohnson/GLMMmisc
 
 # Clear objects
 rm(list = ls())
@@ -17,6 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
+n.sim <- 10 # number of data sets to simulate (divided by 2 for the GLMM analysis)
 
 #### Sample size calculation 1 ----
 
@@ -124,8 +126,8 @@ r <- c(0.25)
 # Choose candidate drivers:
 
 # How many drivers?
-# Continuous drivers x 6 (generic, but could be PK, genetic SNP score, etc)
-n.cont <- 6
+# Continuous drivers (generic, but could be PK, genetic SNP score, age, immune factors, AUC, etc)
+n.cont <- 7
 
 # 4 binary drivers
 # For the binary drivers, what are their proportions?
@@ -134,15 +136,12 @@ bin.x.p <-
   c(HIV = 0.2, 
     malaria = 0.5, 
     `soil-transmitted helminths` = 0.2, 
-    `hybrid/resistance presence` = 0.2)[c(1, 4)] 
+    `hybrid/resistance presence` = 0.2)[c(2, 3, 4)] 
 
 # Total number of drivers:
 n.x <- n.cont + length(bin.x.p)
 
 # Further simulation and analysis options
-
-# number of data sets to simulate
-n.sim <- 1000
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
 alpha <- c(nominal.alpha/n.x)
@@ -217,7 +216,7 @@ print(run.time)
 par.tab$prop.drivers <- sim.res/n.x
 
 # Export results to CSV file with time stamp in file name
-file.name <- paste0("results/schisto_power", 
+file.name <- paste0("results/schisto_power3_", 
                     substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
 write.csv(par.tab, file.name, row.names = FALSE, quote = FALSE)
 
@@ -240,7 +239,7 @@ power.plot <-
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot
-plot.file.name <- "schisto_power1.png"
+plot.file.name <- "schisto_power3.png"
 ggsave(plot.file.name, width = 6, height = 6)
 
 # output methods and results to README.md
@@ -254,7 +253,7 @@ cat("## Sample size calculation 3: identifying drivers of schistosomiasis praziq
     "desired outcome (detecting a true driver of treatment failure). The association between the",
     "outcome (treatment failure) and each driver is estimated and tested in a multivariable GLM.",
     "For this analysis, power is defined as the proportion of drivers that are significantly associated",
-    paste("with the outcome, averaged across", n.sim, "simulated data analyses per scenario.\n\n"),
+    paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario.\n\n"),
     "The following assumptions are made:\n-",
     paste(n.x, "drivers are associated with the outcome, of which", length(bin.x.p), "are binary and", 
           n.cont, "continuous."),
@@ -283,9 +282,230 @@ cat("## Sample size calculation 3: identifying drivers of schistosomiasis praziq
     "[PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
     "Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results)",
     paste0("directory and plotted to [", plot.file.name, 
-           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power1.png).\n\n"),
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power3.png).\n\n"),
     "### Results\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
+    "\n\n\n",
+    file = readme.file, append = TRUE)
+
+#### Sample size calculation 4 ----
+
+# Remove objects except those still required
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha")
+rm(list = ls()[!ls() %in% keep.obj])
+
+# Study design options
+
+# Total sample size
+n <- seq(500, 2000, 500)
+
+# ...divided among n.communities
+n.communities <- c(10, 25, 50)
+
+# Model parameters
+
+# Prevalence
+p <- c(0.1, 0.5)
+
+# normal variance in logit prevalence among communities
+community.var <- 2.73 # estimated from RP's data
+
+# odds ratio per binary predictor, or per SD for continuous predictors
+or <- seq(1, 2, 0.25) 
+
+# how correlated are predictors (because abs(r) > 0 reduces power,
+# and it would be unrealistic to assume zero correlation)
+r <- c(0.25) 
+
+# Choose candidate drivers:
+
+# How many drivers?
+# Continuous drivers x 4 (generic, but could be snail abundance,  infectivity combined risk measure,
+# MDA coverage, estimate of % systematic non treated
+
+n.cont <- 4
+
+# Total number of drivers:
+n.x <- n.cont
+
+# Further simulation and analysis options
+
+# adjust the significance thresholds for multiple testing (Bonferroni)
+alpha <- c(nominal.alpha/n.x)
+
+# Make table of all parameter and design combinations
+par.tab <- 
+  expand.grid(n = n, n.communities = n.communities, p = p, 
+              community.var = community.var, or = or, 
+              r = r, alpha = alpha, n.sim = round(n.sim/2))
+
+# No of subjects per community
+par.tab$n.per.community <- round(par.tab$n / par.tab$n.communities)
+
+# Start the clock
+start.time <- Sys.time()
+
+# Loop over all scenarios = rows of par.tab
+sim.res <- 
+  sapply(1:nrow(par.tab), function(i) {
+    
+    # Print progress
+    print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
+    
+    # Simulate Xs (the drivers)
+    
+    # Correlation among Xs
+    sigma2 <- diag(n.x)
+    sigma2[lower.tri(sigma2)] <- par.tab$r[i]
+    sigma2[upper.tri(sigma2)] <- par.tab$r[i]
+    
+    # Simulate data and analysis n.sim times, returning the mean
+    # number of drivers identified at P < alpha
+    n.sim.out <-
+      mclapply(1:n.sim, function(k) {
+        
+        # Simulate Xs 
+        X <- mvrnorm(par.tab$n.communities[i], mu = rep(0, n.x), Sigma = sigma2)
+        
+        # vector of intercept (log odds) and log odds ratios
+        b <- c(qlogis(par.tab$p[i]), log(rep(par.tab$or[i], n.x)))
+        names(b) <- c("intercept", paste0("X", 1:ncol(X)))
+        
+        # Make data frame storing each individual ID and their community ID
+        dat <- expand.grid(id = factor(1:par.tab$n.per.community[i]), 
+                           community = factor(1:par.tab$n.communities[i]))
+        
+        # Add fixed effects
+        rownames(X) <- levels(dat$community)
+        dat <- data.frame(dat, X[as.character(dat$community), ])
+        
+        # Add column of no of trials (binary data so n_trials = 1)
+        dat$n <- 1
+        
+        # Simulate infected status
+        simdat <- 
+          sim.glmm(design.data = dat, 
+                   fixed.eff = b,
+                   rand.V = list(community = par.tab$community.var[i]),  
+                   distribution = "binomial")
+        
+        # fit GLMM and get z-test p-values for Xs
+        form <- paste("response ~ (1 | community) +",  paste(names(b[-1]), collapse = " + "))
+        fit <- glmmTMB(formula(form), family = binomial, data = simdat)
+        res.tab <- coef(summary(fit))$cond
+        
+        # estimate (geometric) mean margin of error of odds ratio estimates across all drivers
+        # MoE = exp(1.96 * SE) - 1
+        MoE <- exp(1.96 * mean(res.tab[names(b[-1]), "Std. Error"])) - 1
+        
+        # How many drivers were detected (P < alpha)?
+        n.drivers.sig <- sum(res.tab[names(b[-1]), "Pr(>|z|)"] < par.tab$alpha[i])
+        
+        # output results
+        c(n.drivers.sig = n.drivers.sig, MoE = MoE)
+        
+      }, mc.cores = detectCores())
+    
+    # take mean number of drivers (Xs) detected across simulated data sets
+    apply(do.call("rbind", n.sim.out), 2, mean)
+    
+  })
+
+# Stop the clock
+run.time <- Sys.time() - start.time
+print(run.time)
+
+# Estimate power as the proportion of the n.x drivers with p < alpha
+par.tab$prop.drivers <- sim.res["n.drivers.sig", ]/n.x
+
+# Estimate mean margin of error of odds ratio estimates 
+par.tab$or.margin.of.error <- sim.res["MoE", ]
+
+# Export results to CSV file with time stamp in file name
+file.name <- paste0("results/schisto_power4_", 
+                    substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
+write.csv(par.tab, file.name, row.names = FALSE, quote = FALSE)
+
+# Make plots of results
+par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
+par.tab$n <- factor(par.tab$n, rev(n))
+par.tab$n.communities <- factor(paste("N communities =", par.tab$n.communities))
+par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
+par.tab$p <- factor(paste("Prevalence =", par.tab$p))
+
+# plot power
+power.plot <-
+  ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
+  geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
+  geom_point() +
+  geom_line() +
+  ylim(0, 1) +
+  facet_wrap(~ p + n.communities) +
+  xlab("Odds ratio") +
+  ylab("Power") +
+  labs(caption = file.name) + # link results filename to plot
+  theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
+        plot.caption.position = "plot")
+power.plot
+power.plot.file.name <- "schisto_power4.png"
+ggsave(power.plot.file.name, width = 6, height = 6)
+
+# plot margin of error
+moe.plot <-
+  ggplot(data = par.tab, aes(x = or, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
+  geom_point() +
+  geom_line() +
+  ylim(0, NA) +
+  facet_wrap(~ p + n.communities) +
+  xlab("Odds ratio") +
+  ylab("Margin of error (%)") +
+  labs(caption = file.name) + # link results filename to plot
+  theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
+        plot.caption.position = "plot")
+moe.plot
+moe.plot.file.name <- "schisto_moe4.png"
+ggsave(moe.plot.file.name, width = 6, height = 6)
+
+# output methods and results to README.md
+
+cat("## Sample size calculation 4: identifying community-level drivers of schistosomiasis infection\n\n",
+    "### Methods\n\n",
+    "The aim of this power analysis is to estimate power to detect community-level drivers of",
+    "schistosomiasis infection. This is a simulation-based power analysis,",
+    "where the study data is simulated and analysed multiple times under varying study design",
+    "scenarios, and power is estimated as the proportion of simulated analyses that achieve the",
+    "desired outcome (detecting a true driver of infection). The association between the",
+    "outcome (infection) and each driver is estimated and tested in a multivariable GLMM.",
+    "For this analysis, power is defined as the proportion of drivers that are significantly associated",
+    paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario.\n\n"),
+    "The following assumptions are made:\n-",
+    paste(n.x, "continuous drivers are associated with the outcome."),
+    paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
+    "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
+    "and neglecting them will give optimistic power estimates.\n",
+    paste0("- Infection prevalence varies among communities with a logit-normal variance of ", 
+           community.var, ".\n"),
+    "- In order to control inflation of the number of false positive results due to multiple testing of",
+    n.x, "drivers, the significance threshold of", nominal.alpha,
+    paste0("is Bonferroni-adjusted to ", alpha, ", i.e. a driver is significant if P < ", alpha, ".\n\n"),
+    "We explore the effect on power of varying the following study design choices/assumptions:\n",
+    paste0("- Total sample size: ", paste(n, collapse = ", "), ".\n"),  
+    paste0("- Community sample size (number communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),  
+    paste0("- Prevalence of infection: ", paste(p, collapse = ", "), ".\n"),
+    "- The strength of association between each driver and failure to clear,",
+    "defined as an odds ratio per standard deviation",
+    paste0("unit for continuous community-level drivers: ", paste(or[or != 1], collapse = ", "), ".\n\n"),
+    "Full details are provided in the script",
+    "[PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
+    "Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results)",
+    paste0("directory and plotted to [", power.plot.file.name, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", power.plot.file.name, ") and [",
+           moe.plot.file.name, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name,").\n\n"),
+    "### Results\n",
+    paste0("![PowerCurve](", power.plot.file.name, ")"),
+    "\n\n\n",
+    paste0("![PowerCurve](", moe.plot.file.name, ")"),
     "\n\n\n",
     file = readme.file, append = TRUE)
 
