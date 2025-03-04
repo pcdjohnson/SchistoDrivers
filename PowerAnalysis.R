@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 10 # number of data sets to simulate (divided by 2 for the GLMM analysis)
+n.sim <- 2000 # number of data sets to simulate (divided by 2 for the GLMM analysis)
 
 #### Sample size calculation 1 ----
 
@@ -300,7 +300,7 @@ rm(list = ls()[!ls() %in% keep.obj])
 n <- seq(500, 2000, 500)
 
 # ...divided among n.communities
-n.communities <- c(10, 25, 50)
+n.communities <- c(25, 50, 100)
 
 # Model parameters
 
@@ -407,8 +407,10 @@ sim.res <-
       }, mc.cores = detectCores())
     
     # take mean number of drivers (Xs) detected across simulated data sets
-    apply(do.call("rbind", n.sim.out), 2, mean)
-    
+    # and the geometric mean margin of error
+    n.sim.out.tab <- do.call("rbind", n.sim.out)
+    c(n.drivers.sig = mean(n.sim.out.tab[, "n.drivers.sig"]),
+      MoE = exp(mean(log(n.sim.out.tab[, "MoE"]))))
   })
 
 # Stop the clock
@@ -455,10 +457,11 @@ moe.plot <-
   ggplot(data = par.tab, aes(x = or, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
   geom_point() +
   geom_line() +
-  ylim(0, NA) +
+  ylim(1, NA) +
   facet_wrap(~ p + n.communities) +
   xlab("Odds ratio") +
   ylab("Margin of error (%)") +
+  #scale_y_log10() +
   labs(caption = file.name) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
@@ -471,7 +474,8 @@ ggsave(moe.plot.file.name, width = 6, height = 6)
 cat("## Sample size calculation 4: identifying community-level drivers of schistosomiasis infection\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect community-level drivers of",
-    "schistosomiasis infection. This is a simulation-based power analysis,",
+    "schistosomiasis infection, and the expected margin of error around",
+    "community-level driver odds ratio estimates. This is a simulation-based power analysis,",
     "where the study data is simulated and analysed multiple times under varying study design",
     "scenarios, and power is estimated as the proportion of simulated analyses that achieve the",
     "desired outcome (detecting a true driver of infection). The association between the",
@@ -479,7 +483,7 @@ cat("## Sample size calculation 4: identifying community-level drivers of schist
     "For this analysis, power is defined as the proportion of drivers that are significantly associated",
     paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario.\n\n"),
     "The following assumptions are made:\n-",
-    paste(n.x, "continuous drivers are associated with the outcome."),
+    paste(n.x, "continuous drivers are associated with the outcome.\n"),
     paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
     "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
     "and neglecting them will give optimistic power estimates.\n",
