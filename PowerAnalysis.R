@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 2000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 1000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size calculation 1 ----
 
@@ -216,16 +216,20 @@ print(run.time)
 par.tab$prop.drivers <- sim.res/n.x
 
 # Export results to CSV file with time stamp in file name
-file.name <- paste0("results/schisto_power3_", 
-                    substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
-write.csv(par.tab, file.name, row.names = FALSE, quote = FALSE)
+file.name.power3 <- 
+  paste0("results/schisto_power3_", 
+         substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
+write.csv(par.tab, file.name.power3, row.names = FALSE, quote = FALSE)
+rm(par.tab)
+par.tab <- read.csv(file.name.power3) 
 
-# Make plot of results
+# Make factors for plotting
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
 par.tab$n <- factor(par.tab$n, rev(n))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("P(failure to clear) =", par.tab$p))
 
+# Make plot of results
 power.plot <-
   ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
@@ -235,7 +239,7 @@ power.plot <-
   facet_wrap(~ p, ncol = 2) +
   xlab("Odds ratio") +
   ylab("Power") +
-  labs(caption = file.name) + # link results filename to plot
+  labs(caption = file.name.power3) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot
@@ -426,15 +430,18 @@ par.tab$prop.drivers <- round(sim.res["n.drivers.sig", ]/n.x, 5)
 par.tab$or.margin.of.error <- round(sim.res["MoE", ], 5)
 
 # Export results to CSV file with time stamp in file name
-file.name <- paste0("results/schisto_power4_", 
-                    substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
-write.csv(par.tab, file.name, row.names = FALSE, quote = FALSE)
+file.name.power4 <- 
+  paste0("results/schisto_power4_", 
+         substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
+write.csv(par.tab, file.name.power4, row.names = FALSE, quote = FALSE)
+rm(par.tab)
+par.tab <- read.csv(file.name.power4)
 
 # Make plots of results
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
-par.tab$n <- factor(par.tab$n, rev(n))
-par.tab$n.communities <- factor(paste("N communities =", par.tab$n.communities), 
-                                paste("N communities =", (n.communities)))
+par.tab$n <- factor(par.tab$n, n)
+par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
+                     paste("Odds ratio =", or))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 
@@ -448,7 +455,7 @@ power.plot <-
   facet_wrap(~ p + n.communities) +
   xlab("Odds ratio") +
   ylab("Power") +
-  labs(caption = file.name) + # link results filename to plot
+  labs(caption = file.name.power4) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot
@@ -456,17 +463,18 @@ power.plot.file.name <- "schisto_power4.png"
 ggsave(power.plot.file.name, width = 6, height = 6)
 
 # plot margin of error
-par.tab$n <- factor(par.tab$n, rev(levels(par.tab$n)))
+#par.tab$n <- factor(par.tab$n, rev(levels(par.tab$n)))
 moe.plot <-
-  ggplot(data = par.tab, aes(x = or, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
   geom_point() +
   geom_line() +
   ylim(1, NA) +
-  facet_wrap(~ p + n.communities) +
-  xlab("Odds ratio") +
+  facet_wrap(~ p + or, nrow = nlevels(par.tab$p)) +
+  xlab("N communities") +
   ylab("Margin of error (%)") +
-  #scale_y_log10() +
-  labs(caption = file.name) + # link results filename to plot
+  scale_x_continuous(breaks = c(0, n.communities), 
+                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
+  labs(caption = file.name.power4) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 moe.plot
