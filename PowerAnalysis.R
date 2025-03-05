@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 1000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 2000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size calculation 1 ----
 
