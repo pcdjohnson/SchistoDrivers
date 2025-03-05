@@ -71,3 +71,30 @@
  ![PowerCurve](schisto_moe4.png) 
 
 
+## Sample size calculation 4: identifying community-level drivers of schistosomiasis infection
+
+ ### Methods
+
+ The aim of this power analysis is to estimate power to detect community-level drivers of schistosomiasis infection, and the expected margin of error around community-level driver odds ratio estimates. This is a simulation-based power analysis, where the study data is simulated and analysed multiple times under varying study design scenarios, and power is estimated as the proportion of simulated analyses that achieve the desired outcome (detecting a true driver of infection). The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLMM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 500 simulated data analyses per scenario.
+
+ The following assumptions are made:
+- 4 continuous drivers are associated with the outcome.
+ - The drivers are correlated with each other, with a common correlation coefficient of 0.25. We don’t know what the true correlation is among drivers, but moderate correlations are likely and neglecting them will give optimistic power estimates.
+ - Log odds of infection prevalence varies among communities with a variance of 2.73.
+ - In order to control inflation of the number of false positive results due to multiple testing of 4 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.0125, i.e. a driver is significant if P < 0.0125.
+
+ We explore the effect on power of varying the following study design choices/assumptions:
+ - Total sample size: 1000, 1500, 2000, 2500, 3000.
+ - Community sample size (number communities sampled): 25, 50, 100.
+ - Prevalence of infection: 0.1, 0.5.
+ - The strength of association between each driver and failure to clear, defined as an odds ratio per standard deviation unit for continuous community-level drivers: 1.25, 1.5, 1.75, 2.
+
+ Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results) directory and plotted to [schisto_power4.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power4.png) and [schisto_moe4.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_moe4.png).
+
+ ### Results
+ ![PowerCurve](schisto_power4.png) 
+
+
+ ![PowerCurve](schisto_moe4.png) 
+
+

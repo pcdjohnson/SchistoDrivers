@@ -440,8 +440,8 @@ par.tab <- read.csv(file.name.power4)
 # Make plots of results
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
 par.tab$n <- factor(par.tab$n, n)
-par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
-                     paste("Odds ratio =", or))
+par.tab$n.communities.fac <- 
+  factor(paste("N communities =", par.tab$n.communities), paste("N communities =", n.communities))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 
@@ -452,7 +452,7 @@ power.plot <-
   geom_point() +
   geom_line() +
   ylim(0, 1) +
-  facet_wrap(~ p + n.communities) +
+  facet_wrap(~ p + n.communities.fac) +
   xlab("Odds ratio") +
   ylab("Power") +
   labs(caption = file.name.power4) + # link results filename to plot
@@ -464,6 +464,9 @@ ggsave(power.plot.file.name, width = 6, height = 6)
 
 
 # plot margin of error
+par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
+                     paste("Odds ratio =", or))
+
 moe.plot <-
   ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
   geom_point() +
