@@ -462,14 +462,14 @@ power.plot
 power.plot.file.name <- "schisto_power4.png"
 ggsave(power.plot.file.name, width = 6, height = 6)
 
+
 # plot margin of error
-#par.tab$n <- factor(par.tab$n, rev(levels(par.tab$n)))
 moe.plot <-
   ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
   geom_point() +
   geom_line() +
   ylim(1, NA) +
-  facet_wrap(~ p + or, nrow = nlevels(par.tab$p)) +
+  facet_wrap(~ or + p, ncol = nlevels(par.tab$p)) +
   xlab("N communities") +
   ylab("Margin of error (%)") +
   scale_x_continuous(breaks = c(0, n.communities), 
@@ -479,7 +479,7 @@ moe.plot <-
         plot.caption.position = "plot")
 moe.plot
 moe.plot.file.name <- "schisto_moe4.png"
-ggsave(moe.plot.file.name, width = 6, height = 6)
+ggsave(moe.plot.file.name, width = 6, height = 9)
 
 # output methods and results to README.md
 
