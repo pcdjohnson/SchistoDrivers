@@ -206,7 +206,7 @@ cat("## Sample size for Aim 2: identifying drivers of schistosomiasis praziquant
     "### Results\n",
     paste0("![PowerCurve](", plot.file.name, ")"),
     "\n\n\n",
-    file = readme.file, append = TRUE)
+    file = readme.file, append = FALSE)
 
 #### Sample size for Aim 3 (individual reinfection) ----
 
@@ -277,7 +277,6 @@ start.time <- Sys.time()
 sim.res <- 
   sapply(1:nrow(par.tab), function(i) {
     
-    print(par.tab[i, ])
     # Print progress
     print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
     
