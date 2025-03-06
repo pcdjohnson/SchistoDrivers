@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 500 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 50 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size for Aim 2 (individual clearance) ----
 
@@ -204,7 +204,7 @@ cat("## Sample size for Aim 2: identifying drivers of schistosomiasis praziquant
     paste0("directory and plotted to [", plot.file.name, 
            "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", plot.file.name, ").\n\n"),
     "### Results\n",
-    paste0("![PowerCurve](", plot.file.name, ")"),
+    paste0("![Power2Curve](", plot.file.name, ")"),
     "\n\n\n",
     file = readme.file, append = FALSE)
 
@@ -259,13 +259,15 @@ n.x.c <- 4
 # Further simulation and analysis options
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
-alpha <- c(nominal.alpha/(n.x + n.x.c))
+alpha.i <- nominal.alpha/n.x   # individual  drivers
+alpha.c <- nominal.alpha/n.x.c # community drivers
 
 # Make table of all parameter and design combinations
 par.tab <- 
   expand.grid(n = n3, n.communities = n.communities, p = p, 
               community.var = community.var, or = or, 
-              r = r, alpha = alpha, n.sim = round(n.sim/2))
+              r = r, alpha.i = alpha.i, alpha.c = alpha.c, 
+              n.sim = round(n.sim/2))
 
 # No of subjects per community
 par.tab$n.per.community <- ceiling(par.tab$n / par.tab$n.communities)
@@ -350,23 +352,30 @@ sim.res <-
         fit <- glmmTMB(formula(form), family = binomial, data = simdat)
         res.tab <- coef(summary(fit))$cond
         
-        # estimate (geometric) mean margin of error of odds ratio estimates across all drivers
-        # MoE = exp(1.96 * SE) - 1
-        MoE <- exp(1.96 * mean(res.tab[names(b.all[-1]), "Std. Error"])) - 1
+        # estimate (geometric) mean margin of error of odds ratio estimates across drivers
+        # individual drivers
+        MoE.i <- exp(1.96 * mean(res.tab[names(b[-1]), "Std. Error"])) - 1
+        # community drivers
+        MoE.c <- exp(1.96 * mean(res.tab[names(b.c), "Std. Error"])) - 1
         
         # How many drivers were detected (P < alpha)?
-        n.drivers.sig <- sum(res.tab[names(b.all[-1]), "Pr(>|z|)"] < par.tab$alpha[i])
+        # individual drivers
+        n.drivers.sig.i <- sum(res.tab[names(b[-1]), "Pr(>|z|)"] < par.tab$alpha.i[i])
+        # community drivers
+        n.drivers.sig.c <- sum(res.tab[names(b.c), "Pr(>|z|)"] < par.tab$alpha.c[i])
         
         # output results
-        c(n.drivers.sig = n.drivers.sig, MoE = MoE)
+        c(n.drivers.sig.i = n.drivers.sig.i, n.drivers.sig.c = n.drivers.sig.c, MoE.i = MoE.i, MoE.c = MoE.c)
         
       }, mc.cores = detectCores())
     
     # take mean number of drivers (Xs) detected across simulated data sets
     # and the geometric mean margin of error
     n.sim.out.tab <- do.call("rbind", n.sim.out)
-    c(n.drivers.sig = mean(n.sim.out.tab[, "n.drivers.sig"]),
-      MoE = exp(mean(log(n.sim.out.tab[, "MoE"]))))
+    c(n.drivers.sig.i = mean(n.sim.out.tab[, "n.drivers.sig.i"]),
+      n.drivers.sig.c = mean(n.sim.out.tab[, "n.drivers.sig.c"]),
+      MoE.i = exp(mean(log(n.sim.out.tab[, "MoE.i"]))),
+      MoE.c = exp(mean(log(n.sim.out.tab[, "MoE.c"]))))
   })
 
 # Stop the clock
@@ -374,10 +383,16 @@ run.time <- Sys.time() - start.time
 print(run.time)
 
 # Estimate power as the proportion of the n.x drivers with p < alpha
-par.tab$prop.drivers <- round(sim.res["n.drivers.sig", ]/(n.x + n.x.c), 5)
+# For the individual drivers
+par.tab$prop.drivers.i <- round(sim.res["n.drivers.sig.i", ]/n.x, 5)
+# For the community drivers
+par.tab$prop.drivers.c <- round(sim.res["n.drivers.sig.c", ]/n.x.c, 5)
 
 # Estimate mean margin of error of odds ratio estimates 
-par.tab$or.margin.of.error <- round(sim.res["MoE", ], 5)
+# For the individual drivers
+par.tab$or.margin.of.error.i <- round(sim.res["MoE.i", ], 5)
+# For the community drivers
+par.tab$or.margin.of.error.c <- round(sim.res["MoE.c", ], 5)
 
 # Export results to CSV file with time stamp in file name
 file.name.power3 <- 
@@ -388,7 +403,8 @@ rm(par.tab)
 par.tab <- read.csv(file.name.power3)
 
 # Make plots of results
-par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
+par.tab$alpha.i <- factor(paste("alpha =", round(par.tab$alpha.i, 4)))
+par.tab$alpha.c <- factor(paste("alpha =", round(par.tab$alpha.c, 4)))
 par.tab$n <- factor(par.tab$n, n3)
 par.tab$n.communities.fac <- 
   factor(paste("N communities =", par.tab$n.communities), paste("N communities =", n.communities))
@@ -396,43 +412,82 @@ par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 
 # plot power
-power.plot <-
-  ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
+# For the individual drivers
+power.plot.i <-
+  ggplot(data = par.tab, aes(x = or, y = prop.drivers.i, color = n, shape = n, group = n)) + 
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
   facet_wrap(~ p + n.communities.fac) +
   xlab("Odds ratio") +
-  ylab("Power") +
+  ylab("Power to detect individual drivers") +
   labs(caption = file.name.power3) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
-power.plot
-power.plot.file.name <- "schisto_power3.png"
-ggsave(power.plot.file.name, width = 6, height = 6)
+power.plot.i
+power.plot.file.name.i <- "schisto_power3.i.png"
+ggsave(power.plot.file.name.i, width = 6, height = 6)
+
+# plot power
+# For the community drivers
+power.plot.c <-
+  ggplot(data = par.tab, aes(x = or, y = prop.drivers.c, color = n, shape = n, group = n)) + 
+  geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
+  geom_point() +
+  geom_line() +
+  ylim(0, 1) +
+  facet_wrap(~ p + n.communities.fac) +
+  xlab("Odds ratio") +
+  ylab("Power to detect community drivers") +
+  labs(caption = file.name.power3) + # link results filename to plot
+  theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
+        plot.caption.position = "plot")
+power.plot.c
+power.plot.file.name.c <- "schisto_power3.c.png"
+ggsave(power.plot.file.name.c, width = 6, height = 6)
 
 
 # plot margin of error
 par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
                      paste("Odds ratio =", or))
-
-moe.plot <-
-  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
+# For the individual drivers
+moe.plot.i <-
+  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error.i, color = n, shape = n, group = n)) + 
   geom_point() +
   geom_line() +
   ylim(1, NA) +
   facet_wrap(~ or + p, ncol = 2) +
   xlab("N communities") +
-  ylab("Margin of error (%)") +
+  ylab("Margin of error (%) for individual driver OR") +
   scale_x_continuous(breaks = c(0, n.communities), 
                      limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
   labs(caption = file.name.power3) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
-moe.plot
-moe.plot.file.name <- "schisto_moe3.png"
-ggsave(moe.plot.file.name, width = 6, height = 9)
+moe.plot.i
+moe.plot.file.name.i <- "schisto_moe3.i.png"
+ggsave(moe.plot.file.name.i, width = 6, height = 9)
+
+# For the community drivers
+moe.plot.c <-
+  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error.c, color = n, shape = n, group = n)) + 
+  geom_point() +
+  geom_line() +
+  ylim(1, NA) +
+  facet_wrap(~ or + p, ncol = 2) +
+  xlab("N communities") +
+  ylab("Margin of error (%) for community driver OR") +
+  scale_x_continuous(breaks = c(0, n.communities), 
+                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
+  labs(caption = file.name.power3) + # link results filename to plot
+  theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
+        plot.caption.position = "plot")
+moe.plot.c
+moe.plot.file.name.c <- "schisto_moe3.c.png"
+ggsave(moe.plot.file.name.c, width = 6, height = 9)
+
+
 
 # output methods and results to README.md
 
@@ -446,7 +501,9 @@ cat("## Sample size calculation for Aim 3: identifying individual- and community
     "desired outcome (detecting a true driver of infection). The association between the",
     "outcome (infection) and each driver is estimated and tested in a multivariable GLMM.",
     "For this analysis, power is defined as the proportion of drivers that are significantly associated",
-    paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario.\n\n"),
+    paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario."),
+    "Power and margin of error (i.e. 95% confidence interval) in odds ratio estimation are presented",
+    "separately for individual and community-level drivers.\n\n",
     "The following assumptions are made:\n-",
     paste(n.x, "drivers are associated with the outcome, of which", length(bin.x.p), "are binary and", 
           n.cont, "continuous."),
@@ -459,8 +516,10 @@ cat("## Sample size calculation for Aim 3: identifying individual- and community
     paste0("- Log odds of re-infection varies among communities with a variance of ", 
            community.var, ".\n"),
     "- In order to control inflation of the number of false positive results due to multiple testing of",
-    n.x + n.x.c, "drivers, the significance threshold of", nominal.alpha,
-    paste0("is Bonferroni-adjusted to ", alpha, ", i.e. a driver is significant if P < ", alpha, ".\n\n"),
+    n.x, "individual-level drivers and", n.x.c, "community-level drivers, the significance threshold of", 
+    nominal.alpha,
+    paste0("was Bonferroni-adjusted to ", alpha.i, " and ", alpha.c, 
+           " respectively.\n\n"),
     "We explore the effect on power of varying the following study design choices/assumptions:\n",
     paste0("- Total sample size: ", paste(n3, collapse = ", "), ".\n"),  
     paste0("- Community sample size (number communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),  
@@ -471,14 +530,26 @@ cat("## Sample size calculation for Aim 3: identifying individual- and community
     "Full details are provided in the script",
     "[PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
     "Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results)",
-    paste0("directory and plotted to [", power.plot.file.name, 
-           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", power.plot.file.name, ") and [",
-           moe.plot.file.name, 
-           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name,").\n\n"),
+    paste0("directory and plotted to [", 
+           power.plot.file.name.i, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", power.plot.file.name.i, 
+           "), [",
+           power.plot.file.name.c, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", power.plot.file.name.c, 
+           "), [",
+           moe.plot.file.name.i, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name.i, 
+           ") and [",
+           moe.plot.file.name.c, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name.c,").\n\n"),
     "### Results\n",
-    paste0("![PowerCurve](", power.plot.file.name, ")"),
+    paste0("![Power3CurveInd](", power.plot.file.name.i, ")"),
     "\n\n\n",
-    paste0("![PowerCurve](", moe.plot.file.name, ")"),
+    paste0("![Power3CurveCom](", power.plot.file.name.c, ")"),
+    "\n\n\n",
+    paste0("![MoE3CurveInd](", moe.plot.file.name.i, ")"),
+    "\n\n\n",
+    paste0("![MoE3CurveCom](", moe.plot.file.name.c, ")"),
     "\n\n\n",
     file = readme.file, append = TRUE)
 
@@ -714,9 +785,9 @@ cat("## Sample size calculation for Aim 4: identifying community-level drivers o
            moe.plot.file.name, 
            "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name,").\n\n"),
     "### Results\n",
-    paste0("![PowerCurve](", power.plot.file.name, ")"),
+    paste0("![Power4Curve](", power.plot.file.name, ")"),
     "\n\n\n",
-    paste0("![PowerCurve](", moe.plot.file.name, ")"),
+    paste0("![MoE4Curve](", moe.plot.file.name, ")"),
     "\n\n\n",
     file = readme.file, append = TRUE)
 
