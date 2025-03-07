@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 50 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 500 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size for Aim 2 (individual clearance) ----
 
@@ -522,7 +522,7 @@ cat("## Sample size calculation for Aim 3: identifying individual- and community
            " respectively.\n\n"),
     "We explore the effect on power of varying the following study design choices/assumptions:\n",
     paste0("- Total sample size: ", paste(n3, collapse = ", "), ".\n"),  
-    paste0("- Community sample size (number communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),  
+    paste0("- Community sample size (number of communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),  
     paste0("- Prevalence of re-infection: ", paste(p, collapse = ", "), ".\n"),
     "- The strength of association between each driver and re-infection,",
     "defined as an odds ratio per standard deviation",
