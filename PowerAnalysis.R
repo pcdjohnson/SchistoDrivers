@@ -229,7 +229,10 @@ n.communities <- c(25, 50, 100)
 p <- 0.5
 
 # normal variance in logit prevalence among communities
-community.var <- 2.73 # estimated from RP's data
+community.var <- 2.73 
+# estimated from RP's data:
+# cotedivoire, ghana, mali, togo:
+# 1.863905 4.267015 2.429090 2.361259
 
 # odds ratio per binary predictor, or per SD for continuous predictors
 # already defined:
