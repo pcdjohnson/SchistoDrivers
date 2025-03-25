@@ -18,22 +18,22 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 2000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 1000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size for Aim 2 (individual clearance) ----
 
 # Study design options
 
 # Total sample size
-n <- seq(1000, 3000, 500)
+n <- c(seq(600, 2400, 600), seq(3600, 9600, 1200))
 
 # Model parameters
 
 # failure to clear proportion
-p <- seq(0.05, 0.3, 0.05) 
+p <- seq(0.1, 0.3, 0.1) 
 
 # odds ratio per binary predictor, or per SD for continuous predictors
-or <- seq(1, 2, 0.25) 
+or <- seq(1.25, 2, 0.25) 
 
 # how correlated are predictors (because abs(r) > 0 reduces power,
 # and it would be unrealistic to assume zero correlation)
@@ -141,19 +141,19 @@ par.tab <- read.csv(file.name.power2)
 
 # Make factors for plotting
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
-par.tab$n <- factor(par.tab$n, rev(n))
+par.tab$or <- factor(paste("Odds ratio =", par.tab$or), paste("Odds ratio =", rev(or)))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("P(failure to clear) =", par.tab$p))
 
 # Make plot of results
 power.plot <-
-  ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = n, y = prop.drivers, color = or, shape = or, group = or)) + 
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
   facet_wrap(~ p, ncol = 2) +
-  xlab("Odds ratio") +
+  xlab("N") +
   ylab("Power") +
   labs(caption = file.name.power2) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
@@ -161,6 +161,7 @@ power.plot <-
 power.plot
 plot.file.name <- "schisto_power2.png"
 ggsave(plot.file.name, width = 6, height = 6)
+
 
 # output methods and results to README.md
 
@@ -408,7 +409,7 @@ par.tab <- read.csv(file.name.power3)
 # Make plots of results
 par.tab$alpha.i <- factor(paste("alpha =", round(par.tab$alpha.i, 4)))
 par.tab$alpha.c <- factor(paste("alpha =", round(par.tab$alpha.c, 4)))
-par.tab$n <- factor(par.tab$n, n3)
+par.tab$or <- factor(paste("Odds ratio =", par.tab$or), paste("Odds ratio =", rev(or)))
 par.tab$n.communities.fac <- 
   factor(paste("N communities =", par.tab$n.communities), paste("N communities =", n.communities))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
@@ -417,13 +418,13 @@ par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 # plot power
 # For the individual drivers
 power.plot.i <-
-  ggplot(data = par.tab, aes(x = or, y = prop.drivers.i, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = n, y = prop.drivers.i, color = or, shape = or, group = or)) + 
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
   facet_wrap(~ p + n.communities.fac) +
-  xlab("Odds ratio") +
+  xlab("N") +
   ylab("Power to detect individual drivers") +
   labs(caption = file.name.power3) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
@@ -435,13 +436,13 @@ ggsave(power.plot.file.name.i, width = 6, height = 6)
 # plot power
 # For the community drivers
 power.plot.c <-
-  ggplot(data = par.tab, aes(x = or, y = prop.drivers.c, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = n, y = prop.drivers.c, color = or, shape = or, group = or)) + 
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
   facet_wrap(~ p + n.communities.fac) +
-  xlab("Odds ratio") +
+  xlab("N") +
   ylab("Power to detect community drivers") +
   labs(caption = file.name.power3) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
@@ -451,20 +452,21 @@ power.plot.file.name.c <- "schisto_power3.c.png"
 ggsave(power.plot.file.name.c, width = 6, height = 6)
 
 
-# plot margin of error
-par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
-                     paste("Odds ratio =", or))
+# # plot margin of error
+# par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
+#                      paste("Odds ratio =", or))
+
 # For the individual drivers
 moe.plot.i <-
-  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error.i, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = n, y = 100 * or.margin.of.error.i, color = or, shape = or, group = or)) + 
   geom_point() +
   geom_line() +
   ylim(1, NA) +
-  facet_wrap(~ or + p, ncol = 2) +
-  xlab("N communities") +
+  facet_wrap(~ n.communities.fac + p, ncol = 2) +
+  xlab("Total N") +
   ylab("Margin of error (%) for individual driver OR") +
-  scale_x_continuous(breaks = c(0, n.communities), 
-                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
+ # scale_x_continuous(breaks = c(0, n.communities), 
+#                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
   labs(caption = file.name.power3) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
@@ -474,15 +476,15 @@ ggsave(moe.plot.file.name.i, width = 6, height = 9)
 
 # For the community drivers
 moe.plot.c <-
-  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error.c, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = n, y = 100 * or.margin.of.error.c, color = or, shape = or, group = or)) + 
   geom_point() +
   geom_line() +
   ylim(1, NA) +
-  facet_wrap(~ or + p, ncol = 2) +
-  xlab("N communities") +
+  facet_wrap(~ n.communities + p, ncol = 2) +
+  xlab("Total N") +
   ylab("Margin of error (%) for community driver OR") +
-  scale_x_continuous(breaks = c(0, n.communities), 
-                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
+  # scale_x_continuous(breaks = c(0, n.communities), 
+  #                    limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
   labs(caption = file.name.power3) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
@@ -561,7 +563,7 @@ cat("## Sample size calculation for Aim 3: identifying individual- and community
 #### Sample size for Aim 4 (community-level drivers) ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or")
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "n.communities")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
@@ -570,7 +572,7 @@ rm(list = ls()[!ls() %in% keep.obj])
 n
 
 # ...divided among n.communities
-n.communities <- c(25, 50, 100)
+n.communities
 
 # Model parameters
 
@@ -705,7 +707,8 @@ par.tab <- read.csv(file.name.power4)
 
 # Make plots of results
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
-par.tab$n <- factor(par.tab$n, n)
+par.tab$n.fac <- factor(paste("Total N =", par.tab$n), paste("Total N =", n))
+par.tab$or <- factor(paste("Odds ratio =", par.tab$or), paste("Odds ratio =", rev(or)))
 par.tab$n.communities.fac <- 
   factor(paste("N communities =", par.tab$n.communities), paste("N communities =", n.communities))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
@@ -713,13 +716,13 @@ par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 
 # plot power
 power.plot <-
-  ggplot(data = par.tab, aes(x = or, y = prop.drivers, color = n, shape = n, group = n)) + 
+  ggplot(data = par.tab, aes(x = n, y = prop.drivers, color = or, shape = or, group = or)) + 
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
   facet_wrap(~ p + n.communities.fac) +
-  xlab("Odds ratio") +
+  xlab("Total N") +
   ylab("Power") +
   labs(caption = file.name.power4) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
@@ -730,12 +733,12 @@ ggsave(power.plot.file.name, width = 6, height = 6)
 
 
 # plot margin of error
-par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
-                     paste("Odds ratio =", or))
+# par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
+#                      paste("Odds ratio =", or))
+
 
 moe.plot <-
-  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n, shape = n, group = n)) + 
-  geom_point() +
+  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n.fac, group = n.fac)) + 
   geom_line() +
   ylim(1, NA) +
   facet_wrap(~ or + p, ncol = nlevels(par.tab$p)) +
