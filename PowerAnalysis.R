@@ -18,9 +18,9 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 1000 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 500 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
-#### Sample size for Aim 2 (individual clearance) ----
+#### Sample size for Aim 2a (individual clearance) ----
 
 # Study design options
 
@@ -132,12 +132,12 @@ print(run.time)
 par.tab$prop.drivers <- sim.res/n.x
 
 # Export results to CSV file with time stamp in file name
-file.name.power2 <- 
-  paste0("results/schisto_power2_", 
+file.name.power2a <- 
+  paste0("results/schisto_power2a_", 
          substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
-write.csv(par.tab, file.name.power2, row.names = FALSE, quote = FALSE)
+write.csv(par.tab, file.name.power2a, row.names = FALSE, quote = FALSE)
 rm(par.tab)
-par.tab <- read.csv(file.name.power2) 
+par.tab <- read.csv(file.name.power2a) 
 
 # Make factors for plotting
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
@@ -155,17 +155,17 @@ power.plot <-
   facet_wrap(~ p, ncol = 2) +
   xlab("N") +
   ylab("Power") +
-  labs(caption = file.name.power2) + # link results filename to plot
+  labs(caption = file.name.power2a) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot
-plot.file.name <- "schisto_power2.png"
+plot.file.name <- "schisto_power2a.png"
 ggsave(plot.file.name, width = 6, height = 6)
 
 
 # output methods and results to README.md
 
-cat("## Sample size for Aim 2: identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
+cat("## Sample size for Aim 2a: identifying drivers of schistosomiasis praziquantel treatment failure\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment",
     "failure in individuals infected with schistosomiasis. This is a simulation-based power analysis,",
@@ -205,11 +205,11 @@ cat("## Sample size for Aim 2: identifying drivers of schistosomiasis praziquant
     paste0("directory and plotted to [", plot.file.name, 
            "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", plot.file.name, ").\n\n"),
     "### Results\n",
-    paste0("![Power2Curve](", plot.file.name, ")"),
+    paste0("![Power2aCurve](", plot.file.name, ")"),
     "\n\n\n",
     file = readme.file, append = FALSE)
 
-#### Sample size for Aim 3 (individual reinfection) ----
+#### Sample size for Aim 2b (individual reinfection) ----
 
 # Remove objects except those still required
 keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or")
@@ -219,7 +219,7 @@ rm(list = ls()[!ls() %in% keep.obj])
 
 # Total sample size - 70% clear so are at risk of reinfection
 # round up to the nearest 100 so they can be divided among up to 100 communities
-n3 <- round(1 + n * 0.7, -2)
+n2b <- round(1 + n * 0.7, -2)
 
 # ...divided among n.communities
 n.communities <- c(25, 50, 100)
@@ -268,7 +268,7 @@ alpha.c <- nominal.alpha/n.x.c # community drivers
 
 # Make table of all parameter and design combinations
 par.tab <- 
-  expand.grid(n = n3, n.communities = n.communities, p = p, 
+  expand.grid(n = n2b, n.communities = n.communities, p = p, 
               community.var = community.var, or = or, 
               r = r, alpha.i = alpha.i, alpha.c = alpha.c, 
               n.sim = round(n.sim/2))
@@ -399,12 +399,12 @@ par.tab$or.margin.of.error.i <- round(sim.res["MoE.i", ], 5)
 par.tab$or.margin.of.error.c <- round(sim.res["MoE.c", ], 5)
 
 # Export results to CSV file with time stamp in file name
-file.name.power3 <- 
-  paste0("results/schisto_power3_", 
+file.name.power2b <- 
+  paste0("results/schisto_power2b_", 
          substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
-write.csv(par.tab, file.name.power3, row.names = FALSE, quote = FALSE)
+write.csv(par.tab, file.name.power2b, row.names = FALSE, quote = FALSE)
 rm(par.tab)
-par.tab <- read.csv(file.name.power3)
+par.tab <- read.csv(file.name.power2b)
 
 # Make plots of results
 par.tab$alpha.i <- factor(paste("alpha =", round(par.tab$alpha.i, 4)))
@@ -426,11 +426,11 @@ power.plot.i <-
   facet_wrap(~ p + n.communities.fac) +
   xlab("N") +
   ylab("Power to detect individual drivers") +
-  labs(caption = file.name.power3) + # link results filename to plot
+  labs(caption = file.name.power2b) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot.i
-power.plot.file.name.i <- "schisto_power3.i.png"
+power.plot.file.name.i <- "schisto_power2b.i.png"
 ggsave(power.plot.file.name.i, width = 6, height = 6)
 
 # plot power
@@ -444,17 +444,14 @@ power.plot.c <-
   facet_wrap(~ p + n.communities.fac) +
   xlab("N") +
   ylab("Power to detect community drivers") +
-  labs(caption = file.name.power3) + # link results filename to plot
+  labs(caption = file.name.power2b) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot.c
-power.plot.file.name.c <- "schisto_power3.c.png"
+power.plot.file.name.c <- "schisto_power2b.c.png"
 ggsave(power.plot.file.name.c, width = 6, height = 6)
 
 
-# # plot margin of error
-# par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
-#                      paste("Odds ratio =", or))
 
 # For the individual drivers
 moe.plot.i <-
@@ -467,11 +464,11 @@ moe.plot.i <-
   ylab("Margin of error (%) for individual driver OR") +
  # scale_x_continuous(breaks = c(0, n.communities), 
 #                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
-  labs(caption = file.name.power3) + # link results filename to plot
+  labs(caption = file.name.power2b) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 moe.plot.i
-moe.plot.file.name.i <- "schisto_moe3.i.png"
+moe.plot.file.name.i <- "schisto_moe2b.i.png"
 ggsave(moe.plot.file.name.i, width = 6, height = 9)
 
 # For the community drivers
@@ -485,18 +482,18 @@ moe.plot.c <-
   ylab("Margin of error (%) for community driver OR") +
   # scale_x_continuous(breaks = c(0, n.communities), 
   #                    limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
-  labs(caption = file.name.power3) + # link results filename to plot
+  labs(caption = file.name.power2b) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 moe.plot.c
-moe.plot.file.name.c <- "schisto_moe3.c.png"
+moe.plot.file.name.c <- "schisto_moe2b.c.png"
 ggsave(moe.plot.file.name.c, width = 6, height = 9)
 
 
 
 # output methods and results to README.md
 
-cat("## Sample size calculation for Aim 3: identifying individual- and community-level drivers of re-infection following clearance\n\n",
+cat("## Sample size calculation for Aim 2b: identifying individual- and community-level drivers of re-infection following clearance\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect individual- and community-level drivers of",
     "schistosomiasis re-infection following clearance, and the expected margin of error around",
@@ -526,7 +523,7 @@ cat("## Sample size calculation for Aim 3: identifying individual- and community
     paste0("was Bonferroni-adjusted to ", alpha.i, " and ", alpha.c, 
            " respectively.\n\n"),
     "We explore the effect on power of varying the following study design choices/assumptions:\n",
-    paste0("- Total sample size: ", paste(n3, collapse = ", "), ".\n"),  
+    paste0("- Total sample size: ", paste(n2b, collapse = ", "), ".\n"),  
     paste0("- Community sample size (number of communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),  
     paste0("- Prevalence of re-infection: ", paste(p, collapse = ", "), ".\n"),
     "- The strength of association between each driver and re-infection,",
@@ -548,19 +545,19 @@ cat("## Sample size calculation for Aim 3: identifying individual- and community
            moe.plot.file.name.c, 
            "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name.c,").\n\n"),
     "### Results\n",
-    paste0("![Power3CurveInd](", power.plot.file.name.i, ")"),
+    paste0("![Power2bCurveInd](", power.plot.file.name.i, ")"),
     "\n\n\n",
-    paste0("![Power3CurveCom](", power.plot.file.name.c, ")"),
+    paste0("![Power2bCurveCom](", power.plot.file.name.c, ")"),
     "\n\n\n",
-    paste0("![MoE3CurveInd](", moe.plot.file.name.i, ")"),
+    paste0("![MoE2bCurveInd](", moe.plot.file.name.i, ")"),
     "\n\n\n",
-    paste0("![MoE3CurveCom](", moe.plot.file.name.c, ")"),
+    paste0("![MoE2bCurveCom](", moe.plot.file.name.c, ")"),
     "\n\n\n",
     file = readme.file, append = TRUE)
 
 
 
-#### Sample size for Aim 4 (community-level drivers) ----
+#### Sample size for Aim 2c (community-level drivers) ----
 
 # Remove objects except those still required
 keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "n.communities")
@@ -698,12 +695,12 @@ par.tab$prop.drivers <- round(sim.res["n.drivers.sig", ]/n.x, 5)
 par.tab$or.margin.of.error <- round(sim.res["MoE", ], 5)
 
 # Export results to CSV file with time stamp in file name
-file.name.power4 <- 
-  paste0("results/schisto_power4_", 
+file.name.power2c <- 
+  paste0("results/schisto_power2c_", 
          substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
-write.csv(par.tab, file.name.power4, row.names = FALSE, quote = FALSE)
+write.csv(par.tab, file.name.power2c, row.names = FALSE, quote = FALSE)
 rm(par.tab)
-par.tab <- read.csv(file.name.power4)
+par.tab <- read.csv(file.name.power2c)
 
 # Make plots of results
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
@@ -724,11 +721,11 @@ power.plot <-
   facet_wrap(~ p + n.communities.fac) +
   xlab("Total N") +
   ylab("Power") +
-  labs(caption = file.name.power4) + # link results filename to plot
+  labs(caption = file.name.power2c) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 power.plot
-power.plot.file.name <- "schisto_power4.png"
+power.plot.file.name <- "schisto_power2c.png"
 ggsave(power.plot.file.name, width = 6, height = 6)
 
 
@@ -746,16 +743,16 @@ moe.plot <-
   ylab("Margin of error (%)") +
   scale_x_continuous(breaks = c(0, n.communities), 
                      limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
-  labs(caption = file.name.power4) + # link results filename to plot
+  labs(caption = file.name.power2c) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 moe.plot
-moe.plot.file.name <- "schisto_moe4.png"
+moe.plot.file.name <- "schisto_moe2c.png"
 ggsave(moe.plot.file.name, width = 6, height = 9)
 
 # output methods and results to README.md
 
-cat("## Sample size calculation for Aim 4: identifying community-level drivers of schistosomiasis infection\n\n",
+cat("## Sample size calculation for Aim 2c: identifying community-level drivers of schistosomiasis infection\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect community-level drivers of",
     "schistosomiasis infection, and the expected margin of error around",
@@ -791,9 +788,9 @@ cat("## Sample size calculation for Aim 4: identifying community-level drivers o
            moe.plot.file.name, 
            "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name,").\n\n"),
     "### Results\n",
-    paste0("![Power4Curve](", power.plot.file.name, ")"),
+    paste0("![Power2cCurve](", power.plot.file.name, ")"),
     "\n\n\n",
-    paste0("![MoE4Curve](", moe.plot.file.name, ")"),
+    paste0("![MoE2cCurve](", moe.plot.file.name, ")"),
     "\n\n\n",
     file = readme.file, append = TRUE)
 
