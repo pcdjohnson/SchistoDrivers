@@ -34,7 +34,7 @@
  - In order to control inflation of the number of false positive results due to multiple testing of 10 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.005, i.e. a driver is significant if P < 0.005.
 
  We explore the effect on power of varying the following study design choices/assumptions:
- - Sample size: it is assumed that approximately 1200 infected individuals will be recruited (mean realised number of positives = 1094), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
+ - Sample size: it is assumed that approximately 1200 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
  - The strength of association between each driver and failure to clear, defined as an odds ratio for binary drivers and as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2. Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results) directory and plotted to [schisto_power2bi.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power2bi.png).
 
  ### Results
