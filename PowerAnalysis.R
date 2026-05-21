@@ -402,7 +402,7 @@ cat("## Sample size for Aim 2b-i: identifying individual-level drivers of schist
     "### Results\n",
     paste0("![Power2biCurve](", plot.file.name, ")"),
     "\n\n\n",
-    file = readme.file, append = FALSE)
+    file = readme.file, append = TRUE)
 
 #### Sample size for Aim 2b-ii (individual- and community-level drivers of infection and re-infection) ----
 
