@@ -213,16 +213,16 @@ cat("## Sample size for Aim 2a: identifying drivers of schistosomiasis praziquan
 #### Sample size for Aim 2b-i (individual-level drivers of infection) ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "or")
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "or", "n")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
 
 # Total sample size
-n <- 2400
+n.screened <- 2400
 
 # Number of uninfected to retain 
-n.neg <- round(seq(n/10, n/2, length.out = 9))
+n.neg <- round(seq(n.screened/10, n.screened/2, length.out = 9))
 
 # Model parameters
 
@@ -253,7 +253,9 @@ n.x <- n.cont + length(bin.x.p)
 alpha <- c(nominal.alpha/n.x)
 
 # Make table of all parameter and design combinations
-par.tab <- expand.grid(n = n, n.neg = n.neg, p = p, or = or, r = r, alpha = alpha, n.sim = n.sim)
+par.tab <- 
+  expand.grid(n.screened = n.screened, n.neg = n.neg, p = p, or = or,
+              r = r, alpha = alpha, n.sim = n.sim)
 
 # Start the clock
 start.time <- Sys.time()
@@ -278,7 +280,7 @@ sim.res <-
       mclapply(1:par.tab$n.sim[i], function(k) {
         
         # Simulate Xs before dichotomising (so the binary Xs are derived from latent scales)
-        X.raw <- mvrnorm(par.tab$n[i], mu = rep(0, n.x), Sigma = sigma2)
+        X.raw <- mvrnorm(par.tab$n.screened[i], mu = rep(0, n.x), Sigma = sigma2)
         
         # Dichotomise the binary Xs, but centre on zero by subtracting 0.5
         # and add a column of 1s for the intercept
@@ -295,7 +297,7 @@ sim.res <-
         b <- c(qlogis(par.tab$p[i]), log(rep(par.tab$or[i], n.x)))
         
         # Simulate failure to clear from linear predictor X %*% b
-        response <- rbinom(par.tab$n[i], 1, plogis(X %*% b))
+        response <- rbinom(par.tab$n.screened[i], 1, plogis(X %*% b))
         
         # Drop all but n.neg of the negatives
         neg.rows <- which(response == 0)
@@ -348,7 +350,7 @@ par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
 par.tab$or <- factor(paste("Odds ratio =", par.tab$or), paste("Odds ratio =", rev(or)))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
-par.tab$n <- factor(paste("Prevalence =", par.tab$p))
+par.tab$n.screened <- factor(paste("N screened =", par.tab$n.screened))
 par.tab$n.pos.fac <- factor(paste("Mean N positives =", round(mean(par.tab$n.pos))))
 
 # Make plot of results
