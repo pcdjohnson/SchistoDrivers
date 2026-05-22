@@ -18,14 +18,16 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 10 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 100 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+global.start.time <- Sys.time()
 
 #### Sample size for Aim 2a (individual clearance) ----
 
 # Study design options
 
 # Total sample size
-n <- c(seq(600, 2400, 600), seq(3600, 9600, 1200))
+#n <- c(seq(600, 2400, 600), seq(3600, 9600, 1200))
+n <- seq(1200, 2000, by = 100)
 
 # Model parameters
 
@@ -73,8 +75,8 @@ sim.res <-
   sapply(1:nrow(par.tab), function(i) {
     
     # Print progress
-    print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
-    
+    message('\r', paste0(round(100*(i-1)/nrow(par.tab)), "% complete"), appendLF = FALSE)
+
     # Simulate Xs (the drivers)
     
     # Correlation among Xs
@@ -213,7 +215,7 @@ cat("## Sample size for Aim 2a: identifying drivers of schistosomiasis praziquan
 #### Sample size for Aim 2b-i (individual-level drivers of infection) ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "or", "n")
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "or", "n", "global.start.time")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
@@ -265,7 +267,7 @@ sim.res <-
   sapply(1:nrow(par.tab), function(i) {
     
     # Print progress
-    print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
+    message('\r', paste0(round(100*(i-1)/nrow(par.tab)), "% complete"), appendLF = FALSE)
     
     # Simulate Xs (the drivers)
     
@@ -409,7 +411,7 @@ cat("## Sample size for Aim 2b-i: identifying individual-level drivers of schist
 #### Sample size for Aim 2b-ii (individual- and community-level drivers of infection and re-infection) ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or")
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "global.start.time")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
@@ -419,7 +421,8 @@ rm(list = ls()[!ls() %in% keep.obj])
 n2bii <- round(1 + n * 0.7, -2)
 
 # ...divided among n.communities
-n.communities <- c(25, 50, 100)
+#n.communities <- c(25, 50, 100)
+n.communities <- c(20, 22, 24, 26, 28, 30)
 
 # Model parameters
 
@@ -472,6 +475,7 @@ par.tab <-
 
 # No of subjects per community
 par.tab$n.per.community <- ceiling(par.tab$n / par.tab$n.communities)
+par.tab$n.real <- par.tab$n.per.community * par.tab$n.communities
 
 # Start the clock
 start.time <- Sys.time()
@@ -481,7 +485,7 @@ sim.res <-
   sapply(1:nrow(par.tab), function(i) {
     
     # Print progress
-    print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
+    message('\r', paste0(round(100*(i-1)/nrow(par.tab)), "% complete"), appendLF = FALSE)
     
     # Simulate Xs (the drivers)
     
@@ -506,7 +510,7 @@ sim.res <-
         dim(dat)
         
         # Simulate individual Xs before dichotomising (so the binary Xs are derived from latent scales)
-        X.raw <- mvrnorm(par.tab$n[i], mu = rep(0, n.x), Sigma = sigma2)
+        X.raw <- mvrnorm(par.tab$n.real[i], mu = rep(0, n.x), Sigma = sigma2)
         
         # Dichotomise the binary Xs, but centre on zero by subtracting 0.5
         # and add a column of 1s for the intercept
@@ -754,7 +758,7 @@ cat("## Sample size calculation for Aim 2b-ii: identifying individual- and commu
 #### Sample size for Aim 2c (community-level and individual-level drivers) ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "n.communities")
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "n.communities", "global.start.time")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
@@ -815,8 +819,7 @@ sim.res <-
   sapply(1:nrow(par.tab), function(i) {
     
     # Print progress
-    print(paste0(round(100*(i-1)/nrow(par.tab)), "% complete"))
-    
+    message('\r', paste0(round(100*(i-1)/nrow(par.tab)), "% complete"), appendLF = FALSE)
     # Simulate Xs (the drivers)
     
     # Correlation among Xs
@@ -912,7 +915,7 @@ power.plot <-
   geom_point() +
   geom_line() +
   ylim(0, 1) +
-  facet_wrap(~ p + n.communities.fac) +
+  facet_wrap(~ p + n.communities.fac, ncol = 3) +
   xlab("Total N") +
   ylab("Power") +
   labs(caption = file.name.power2c) + # link results filename to plot
@@ -920,14 +923,10 @@ power.plot <-
         plot.caption.position = "plot")
 power.plot
 power.plot.file.name <- "schisto_power2c.png"
-ggsave(power.plot.file.name, width = 6, height = 6)
+ggsave(power.plot.file.name, width = 8, height = 6)
 
 
 # plot margin of error
-# par.tab$or <- factor(paste("Odds ratio =", par.tab$or), 
-#                      paste("Odds ratio =", or))
-
-
 moe.plot <-
   ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n.fac, group = n.fac)) + 
   geom_line() +
@@ -935,8 +934,7 @@ moe.plot <-
   facet_wrap(~ or + p, ncol = nlevels(par.tab$p)) +
   xlab("N communities") +
   ylab("Margin of error (%)") +
-  scale_x_continuous(breaks = c(0, n.communities), 
-                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
+  scale_x_continuous(breaks = c(0, n.communities)) + 
   labs(caption = file.name.power2c) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
@@ -985,5 +983,10 @@ cat("## Sample size calculation for Aim 2c: identifying community-level drivers 
     "\n\n\n",
     file = readme.file, append = TRUE)
 
+# preview results
+markdown::markdownToHTML("README.md", "README.html")
+browseURL("README.html")
 
-
+# report run time
+global.run.time <- Sys.time() - global.start.time
+print(global.run.time)
