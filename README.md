@@ -2,7 +2,7 @@
 
  ### Methods
 
- The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment failure in individuals infected with schistosomiasis. This is a simulation-based power analysis, where the study data is simulated and analysed multiple times under varying study design scenarios, and power is estimated as the proportion of simulated analyses that achieve the desired outcome (detecting a true driver of treatment failure). The association between the outcome (treatment failure) and each driver is estimated and tested in a multivariable GLM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 100 simulated data analyses per scenario.
+ The aim of this power analysis is to estimate power to detect drivers of praziquantel treatment failure in individuals infected with schistosomiasis. This is a simulation-based power analysis, where the study data is simulated and analysed multiple times under varying study design scenarios, and power is estimated as the proportion of simulated analyses that achieve the desired outcome (detecting a true driver of treatment failure). The association between the outcome (treatment failure) and each driver is estimated and tested in a multivariable GLM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 10 simulated data analyses per scenario.
 
  The following assumptions are made:
 - 10 drivers are associated with the outcome, of which 3 are binary and 7 continuous. The prevalences of the binary drivers are: 0.5, 0.2, 0.2, representing  malaria, soil-transmitted helminths, hybrid/resistance presence .
@@ -26,7 +26,7 @@
 
  ### Methods
 
- The aim of this power analysis is to estimate power to detect drivers of schistosomiasis infection. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLM. Power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 100 simulated data analyses per scenario.
+ The aim of this power analysis is to estimate power to detect drivers of schistosomiasis infection. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLM. Power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 10 simulated data analyses per scenario.
 
  The following assumptions are made:
 - 10 drivers are associated with the outcome, of which 3 are binary and 7 continuous. The prevalences of the binary drivers are: 0.5, 0.2, 0.2, representing  malaria, soil-transmitted helminths, hybrid/resistance presence .
@@ -34,16 +34,7 @@
  - In order to control inflation of the number of false positive results due to multiple testing of 10 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.005, i.e. a driver is significant if P < 0.005.
 
  We explore the effect on power of varying the following study design choices/assumptions:
- - Sample size: it is assumed that approximately 300 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 600 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 900 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 1200 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 1800 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 2400 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 3000 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 3600 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 4200 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
- - Sample size: it is assumed that approximately 4800 infected individuals will be recruited (mean realised number of positives = 1095), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
+ - Sample size: it is assumed that approximately 1200 infected individuals will be recruited (mean realised number of positives = 1097), while the number of negatives will be varied: 240, 360, 480, 600, 720, 840, 960, 1080, 1200.
  - The strength of association between each driver and failure to clear, defined as an odds ratio for binary drivers and as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2. Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results) directory and plotted to [schisto_power2bi.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power2bi.png).
 
  ### Results
@@ -54,7 +45,7 @@
 
  ### Methods
 
- The aim of this power analysis is to estimate power to detect individual- and community-level drivers of schistosomiasis re-infection following clearance, and the expected margin of error around community-level driver odds ratio estimates. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLMM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 50 simulated data analyses per scenario. Power and margin of error (i.e. 95% confidence interval) in odds ratio estimation are presented separately for individual and community-level drivers.
+ The aim of this power analysis is to estimate power to detect individual- and community-level drivers of schistosomiasis re-infection following clearance, and the expected margin of error around community-level driver odds ratio estimates. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLMM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 5 simulated data analyses per scenario. Power and margin of error (i.e. 95% confidence interval) in odds ratio estimation are presented separately for individual and community-level drivers.
 
  The following assumptions are made:
 - 5 drivers are associated with the outcome, of which 1 are binary and 4 continuous. The prevalences of the binary drivers are: 0.2, representing  hybrid/resistance presence .
@@ -88,7 +79,7 @@
 
  ### Methods
 
- The aim of this power analysis is to estimate power to detect community-level drivers of schistosomiasis infection, and the expected margin of error around community-level driver odds ratio estimates. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLMM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 50 simulated data analyses per scenario.
+ The aim of this power analysis is to estimate power to detect community-level drivers of schistosomiasis infection, and the expected margin of error around community-level driver odds ratio estimates. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLMM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 5 simulated data analyses per scenario.
 
  The following assumptions are made:
 - 4 continuous drivers are associated with the outcome.

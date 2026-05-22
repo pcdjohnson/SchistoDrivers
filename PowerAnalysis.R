@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 100 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 10 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size for Aim 2a (individual clearance) ----
 
@@ -389,7 +389,7 @@ cat("## Sample size for Aim 2b-i: identifying individual-level drivers of schist
     n.x, "drivers, the significance threshold of", nominal.alpha,
     paste0("is Bonferroni-adjusted to ", alpha, ", i.e. a driver is significant if P < ", alpha, ".\n\n"),
     "We explore the effect on power of varying the following study design choices/assumptions:\n",
-    paste0("- Sample size: it is assumed that approximately ", round(n * p), 
+    paste0("- Sample size: it is assumed that approximately ", round(n.screened * p), 
            " infected individuals will be recruited (mean realised number of positives = ", 
            round(mean(par.tab$n.pos)), "), while the number of negatives will be varied: ",
            paste(n.neg, collapse = ", "), ".\n"),  
