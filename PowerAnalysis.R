@@ -18,7 +18,7 @@ rm(list = ls())
 # Global settings
 readme.file <- "README.md" # methods and results output file
 nominal.alpha <- 0.05 # significance threshold
-n.sim <- 50 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
+n.sim <- 100 # number of data sets to simulate (divided by 2 for the GLMM analysis, because it's slow)
 
 #### Sample size for Aim 2a (individual clearance) ----
 
@@ -751,7 +751,7 @@ cat("## Sample size calculation for Aim 2b-ii: identifying individual- and commu
 
 
 
-#### Sample size for Aim 2c-i (community-level drivers) ----
+#### Sample size for Aim 2c (community-level and individual-level drivers) ----
 
 # Remove objects except those still required
 keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "n.communities")
@@ -946,7 +946,7 @@ ggsave(moe.plot.file.name, width = 6, height = 9)
 
 # output methods and results to README.md
 
-cat("## Sample size calculation for Aim 2c-i: identifying community-level drivers of schistosomiasis infection\n\n",
+cat("## Sample size calculation for Aim 2c: identifying community-level drivers of schistosomiasis infection\n\n",
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect community-level drivers of",
     "schistosomiasis infection, and the expected margin of error around",
