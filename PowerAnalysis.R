@@ -26,8 +26,8 @@ global.start.time <- Sys.time()
 # Study design options
 
 # Total sample size
-#n <- c(seq(600, 2400, 600), seq(3600, 9600, 1200))
-n <- seq(1200, 2000, by = 100)
+n <- c(seq(600, 2400, 600), seq(3600, 9600, 1200))
+#n <- seq(1200, 2000, by = 100)
 
 # Model parameters
 
@@ -162,7 +162,7 @@ power.plot <-
         plot.caption.position = "plot")
 power.plot
 plot.file.name <- "schisto_power2a.png"
-ggsave(plot.file.name, width = 6, height = 6)
+ggsave(plot.file.name, power.plot, width = 6, height = 6)
 
 
 # output methods and results to README.md
@@ -221,10 +221,10 @@ rm(list = ls()[!ls() %in% keep.obj])
 # Study design options
 
 # Total sample size
-n.screened <- 2400
+n.screened <- 3200
 
 # Number of uninfected to retain 
-n.neg <- round(seq(n.screened/10, n.screened/2, length.out = 9))
+n.neg <- round(seq(n.screened/16, n.screened/2, length.out = 9))
 
 # Model parameters
 
@@ -370,7 +370,7 @@ power.plot <-
         plot.caption.position = "plot")
 power.plot
 plot.file.name <- "schisto_power2bi.png"
-ggsave(plot.file.name, width = 6, height = 6)
+ggsave(plot.file.name, power.plot, width = 6, height = 6)
 
 cat("## Sample size for Aim 2b-i: identifying individual-level drivers of schistosomiasis infection\n\n",
     "### Methods\n\n",
@@ -384,9 +384,7 @@ cat("## Sample size for Aim 2b-i: identifying individual-level drivers of schist
           n.cont, "continuous."),
     paste0("The prevalences of the binary drivers are: ", paste(bin.x.p, collapse = ", "), ","),
     "representing ", paste(names(bin.x.p), collapse = ", "), ".\n",
-    paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
-    "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
-    "and neglecting them will give optimistic power estimates.\n",
+    paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, ".\n"),
     "- In order to control inflation of the number of false positive results due to multiple testing of",
     n.x, "drivers, the significance threshold of", nominal.alpha,
     paste0("is Bonferroni-adjusted to ", alpha, ", i.e. a driver is significant if P < ", alpha, ".\n\n"),
@@ -416,13 +414,11 @@ rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
 
-# Total sample size - 70% clear so are at risk of reinfection
-# round up to the nearest 100 so they can be divided among up to 100 communities
-n2bii <- round(1 + n * 0.7, -2)
+# Total sample size
+n2bii <- 1600 
 
 # ...divided among n.communities
-#n.communities <- c(25, 50, 100)
-n.communities <- c(20, 22, 24, 26, 28, 30)
+n.communities <- c(22, 24, 26)
 
 # Model parameters
 
@@ -431,7 +427,7 @@ p <- 0.5
 
 # normal variance in logit prevalence among communities
 community.var <- 2.73 
-# estimated from RP's data:
+# estimated from RP's data as the mean of estimates from
 # cotedivoire, ghana, mali, togo:
 # 1.863905 4.267015 2.429090 2.361259
 
@@ -447,30 +443,31 @@ r
 # Choose candidate drivers:
 
 # How many drivers?
-# individual continuous drivers x 4 (Age, Immunology, Immunology, Baseline infection intensity)
-n.cont <- 4
-# individual binary drivers x 1 (Hybrid/resistance – 20%)
+# continuous drivers x 4 
+# these could be individual drivers (Age, Immunology, Immunology, Baseline infection intensity)
+# or community level drivers (Snail infection rates, MDA coverage, Distance to water sites, 
+# How many produce sensible numbers?)
+n.cont <- 9
+# binary drivers x 1 (Hybrid/resistance – 20%)
 bin.x.p <- c(`hybrid/resistance presence` = 0.2)
 
-# Total number of individual drivers:
+# Total number of drivers:
 n.x <- n.cont + length(bin.x.p)
 
-# Community level drivers x 4 (generic, but standing for Snail infection rates,
-# MDA coverage, Distance to water sites, How many produce sensible numbers?)
-# All community level drivers are continuous
-n.x.c <- 4
+# We will vary the community-level-ness of these drivers from ICC = 0% to 100%
+icc <- c(0, 0.25, 0.5, 0.75, 1)
 
 # Further simulation and analysis options
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
-alpha.i <- nominal.alpha/n.x   # individual  drivers
-alpha.c <- nominal.alpha/n.x.c # community drivers
+alpha <- nominal.alpha/n.x
 
 # Make table of all parameter and design combinations
 par.tab <- 
-  expand.grid(n = n2bii, n.communities = n.communities, p = p, 
+  expand.grid(n = n2bii, n.communities = n.communities, 
+              icc = icc, p = p, 
               community.var = community.var, or = or, 
-              r = r, alpha.i = alpha.i, alpha.c = alpha.c, 
+              r = r, alpha = alpha, 
               n.sim = round(n.sim/2))
 
 # No of subjects per community
@@ -486,18 +483,17 @@ sim.res <-
     
     # Print progress
     message('\r', paste0(round(100*(i-1)/nrow(par.tab)), "% complete"), appendLF = FALSE)
-    
+
     # Simulate Xs (the drivers)
     
-    # Correlation among individual level drivers
+    # Correlation among level drivers
     sigma2 <- diag(n.x)
     sigma2[lower.tri(sigma2)] <- par.tab$r[i]
     sigma2[upper.tri(sigma2)] <- par.tab$r[i]
     
-    # Correlation among community level drivers
-    sigma2.c <- diag(n.x.c)
-    sigma2.c[lower.tri(sigma2.c)] <- par.tab$r[i]
-    sigma2.c[upper.tri(sigma2.c)] <- par.tab$r[i]
+    # # # Correlation among community level drivers
+    # sigma2.c[lower.tri(sigma2)] <- par.tab$r[i]
+    # sigma2.c[upper.tri(sigma2)] <- par.tab$r[i]
     
     # Simulate data and analysis n.sim times, returning the mean
     # number of drivers identified at P < alpha
@@ -509,9 +505,18 @@ sim.res <-
                            community = factor(1:par.tab$n.communities[i]))
         dim(dat)
         
-        # Simulate individual Xs before dichotomising (so the binary Xs are derived from latent scales)
-        X.raw <- mvrnorm(par.tab$n.real[i], mu = rep(0, n.x), Sigma = sigma2)
-        
+        # Simulate individual-level Xs before dichotomising (so the binary Xs are derived from latent scales)
+        X.i <- mvrnorm(par.tab$n.real[i], mu = rep(0, n.x), Sigma = sigma2)
+
+        # Simulate community level Xs 
+        X.c <- mvrnorm(par.tab$n.communities[i], mu = rep(0, n.x), Sigma = sigma2)
+
+        # Combine the individual- and community-level Xs in a weighted sum depending on ICC
+        ICC <- par.tab$icc[i]
+        w <- sqrt(ICC) / (sqrt(ICC) + sqrt(1 - ICC))
+        s <- sqrt(w^2 + (1 - w)^2)
+        X.raw <- (w * X.c[dat$community, ] + (1 - w) * X.i) / s
+
         # Dichotomise the binary Xs, but centre on zero by subtracting 0.5
         # and add a column of 1s for the intercept
         X <-
@@ -526,20 +531,8 @@ sim.res <-
         # vector of intercept (log odds) and log odds ratios
         b <- c(qlogis(par.tab$p[i]), log(rep(par.tab$or[i], n.x)))
         names(b) <- c("intercept", paste0("X", 1:(ncol(X) - 1)))
-        
-        # Simulate community level Xs 
-        X.c <- mvrnorm(par.tab$n.communities[i], mu = rep(0, n.x.c), Sigma = sigma2.c)
-        
-        # vector of log odds ratios
-        b.c <- log(rep(par.tab$or[i], n.x.c))
-        names(b.c) <- paste0("X", n.x + (1:ncol(X.c)))
-        b.all <- c(b, b.c)
-        rownames(X.c) <- levels(dat$community)
-        
-        # Add fixed effects
-        X.all <- cbind(X, X.c[as.character(dat$community), ])
-        colnames(X.all) <- names(b.all)
-        dat <- data.frame(dat, X.all)
+        colnames(X) <- names(b)
+        dat <- data.frame(dat, X)
         head(dat)
 
         # Add column of no of trials (binary data so n_trials = 1)
@@ -548,39 +541,36 @@ sim.res <-
         # Simulate infected status
         simdat <- 
           sim.glmm(design.data = dat, 
-                   fixed.eff = b.all,
+                   fixed.eff = b,
                    rand.V = list(community = par.tab$community.var[i]),  
                    distribution = "binomial")
         
         # fit GLMM and get z-test p-values for Xs
-        form <- paste("response ~ (1 | community) +",  paste(names(b.all[-1]), collapse = " + "))
+        form <- paste("response ~ (1 | community) +",  paste(names(b[-1]), collapse = " + "))
         fit <- glmmTMB(formula(form), family = binomial, data = simdat)
         res.tab <- coef(summary(fit))$cond
         
         # estimate (geometric) mean margin of error of odds ratio estimates across drivers
         # individual drivers
-        MoE.i <- exp(1.96 * mean(res.tab[names(b[-1]), "Std. Error"])) - 1
-        # community drivers
-        MoE.c <- exp(1.96 * mean(res.tab[names(b.c), "Std. Error"])) - 1
+        MoE <- exp(1.96 * mean(res.tab[names(b[-1]), "Std. Error"])) - 1
         
+        # guard against non-converged fits giving extreme SE estimates
+        if(!is.na(MoE) && MoE > 10) MoE <- NA
+
         # How many drivers were detected (P < alpha)?
-        # individual drivers
-        n.drivers.sig.i <- sum(res.tab[names(b[-1]), "Pr(>|z|)"] < par.tab$alpha.i[i])
-        # community drivers
-        n.drivers.sig.c <- sum(res.tab[names(b.c), "Pr(>|z|)"] < par.tab$alpha.c[i])
-        
+        n.drivers.sig <- sum(res.tab[names(b[-1]), "Pr(>|z|)"] < par.tab$alpha[i])
+
         # output results
-        c(n.drivers.sig.i = n.drivers.sig.i, n.drivers.sig.c = n.drivers.sig.c, MoE.i = MoE.i, MoE.c = MoE.c)
+        c(n.drivers.sig = n.drivers.sig, MoE = MoE)
         
       }, mc.cores = detectCores())
     
     # take mean number of drivers (Xs) detected across simulated data sets
     # and the geometric mean margin of error
     n.sim.out.tab <- do.call("rbind", n.sim.out)
-    c(n.drivers.sig.i = mean(n.sim.out.tab[, "n.drivers.sig.i"]),
-      n.drivers.sig.c = mean(n.sim.out.tab[, "n.drivers.sig.c"]),
-      MoE.i = exp(mean(log(n.sim.out.tab[, "MoE.i"]))),
-      MoE.c = exp(mean(log(n.sim.out.tab[, "MoE.c"]))))
+    print(n.sim.out.tab[, "MoE"])
+    c(n.drivers.sig = mean(n.sim.out.tab[, "n.drivers.sig"], na.rm = TRUE),
+      MoE = exp(mean(log(n.sim.out.tab[, "MoE"]), na.rm = TRUE)))
   })
 
 # Stop the clock
@@ -588,16 +578,10 @@ run.time <- Sys.time() - start.time
 print(run.time)
 
 # Estimate power as the proportion of the n.x drivers with p < alpha
-# For the individual drivers
-par.tab$prop.drivers.i <- round(sim.res["n.drivers.sig.i", ]/n.x, 5)
-# For the community drivers
-par.tab$prop.drivers.c <- round(sim.res["n.drivers.sig.c", ]/n.x.c, 5)
+par.tab$prop.drivers <- round(sim.res["n.drivers.sig", ]/n.x, 5)
 
 # Estimate mean margin of error of odds ratio estimates 
-# For the individual drivers
-par.tab$or.margin.of.error.i <- round(sim.res["MoE.i", ], 5)
-# For the community drivers
-par.tab$or.margin.of.error.c <- round(sim.res["MoE.c", ], 5)
+par.tab$or.margin.of.error <- round(sim.res["MoE", ], 5)
 
 # Export results to CSV file with time stamp in file name
 file.name.power2bii <- 
@@ -608,88 +592,48 @@ rm(par.tab)
 par.tab <- read.csv(file.name.power2bii)
 
 # Make plots of results
-par.tab$alpha.i <- factor(paste("alpha =", round(par.tab$alpha.i, 4)))
-par.tab$alpha.c <- factor(paste("alpha =", round(par.tab$alpha.c, 4)))
+par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
 par.tab$or <- factor(paste("Odds ratio =", par.tab$or), paste("Odds ratio =", rev(or)))
 par.tab$n.communities.fac <- 
   factor(paste("N communities =", par.tab$n.communities), paste("N communities =", n.communities))
+par.tab$n.fac <- factor(paste("N =", par.tab$n))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 
 # plot power
-# For the individual drivers
-power.plot.i <-
-  ggplot(data = par.tab, aes(x = n, y = prop.drivers.i, color = or, shape = or, group = or)) + 
+power.plot <-
+  ggplot(data = par.tab, aes(x = icc, y = prop.drivers, color = or, shape = or, group = or)) + 
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
-  facet_wrap(~ p + n.communities.fac) +
-  xlab("N") +
+  facet_wrap(~ p + n.communities.fac + n.fac, ncol = 2) +
+  xlab("ICC") +
   ylab("Power to detect individual drivers") +
   labs(caption = file.name.power2bii) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
-power.plot.i
-power.plot.file.name.i <- "schisto_power2bii.i.png" # 2b-ii-individual
-ggsave(power.plot.file.name.i, width = 6, height = 6)
-
-# plot power
-# For the community drivers
-power.plot.c <-
-  ggplot(data = par.tab, aes(x = n, y = prop.drivers.c, color = or, shape = or, group = or)) + 
-  geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
-  geom_point() +
-  geom_line() +
-  ylim(0, 1) +
-  facet_wrap(~ p + n.communities.fac) +
-  xlab("N") +
-  ylab("Power to detect community drivers") +
-  labs(caption = file.name.power2bii) + # link results filename to plot
-  theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
-        plot.caption.position = "plot")
-power.plot.c
-power.plot.file.name.c <- "schisto_power2bii.c.png"
-ggsave(power.plot.file.name.c, width = 6, height = 6)
-
-
+power.plot
+power.plot.file.name <- "schisto_power2bii.png"
+ggsave(power.plot.file.name, power.plot, width = 6, height = 6)
 
 # For the individual drivers
-moe.plot.i <-
-  ggplot(data = par.tab, aes(x = n, y = 100 * or.margin.of.error.i, color = or, shape = or, group = or)) + 
+moe.plot <-
+  ggplot(data = par.tab, aes(x = icc, y = 100 * or.margin.of.error, color = or, shape = or, group = or)) + 
   geom_point() +
   geom_line() +
   ylim(1, NA) +
-  facet_wrap(~ n.communities.fac + p, ncol = 2) +
-  xlab("Total N") +
+  facet_wrap(~ p + n.communities.fac + n.fac, ncol = 2) +
+  xlab("ICC") +
   ylab("Margin of error (%) for individual driver OR") +
  # scale_x_continuous(breaks = c(0, n.communities), 
 #                     limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
   labs(caption = file.name.power2bii) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
-moe.plot.i
-moe.plot.file.name.i <- "schisto_moe2bii.i.png"
-ggsave(moe.plot.file.name.i, width = 6, height = 9)
-
-# For the community drivers
-moe.plot.c <-
-  ggplot(data = par.tab, aes(x = n, y = 100 * or.margin.of.error.c, color = or, shape = or, group = or)) + 
-  geom_point() +
-  geom_line() +
-  ylim(1, NA) +
-  facet_wrap(~ n.communities + p, ncol = 2) +
-  xlab("Total N") +
-  ylab("Margin of error (%) for community driver OR") +
-  # scale_x_continuous(breaks = c(0, n.communities), 
-  #                    limits = c(min(n.communities) - 5, max(n.communities) + 5)) + 
-  labs(caption = file.name.power2bii) + # link results filename to plot
-  theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
-        plot.caption.position = "plot")
-moe.plot.c
-moe.plot.file.name.c <- "schisto_moe2bii.c.png"
-ggsave(moe.plot.file.name.c, width = 6, height = 9)
-
+moe.plot
+moe.plot.file.name <- "schisto_moe2bii.png"
+ggsave(moe.plot.file.name, moe.plot, width = 6, height = 9)
 
 
 # output methods and results to README.md
@@ -698,31 +642,31 @@ cat("## Sample size calculation for Aim 2b-ii: identifying individual- and commu
     "### Methods\n\n",
     "The aim of this power analysis is to estimate power to detect individual- and community-level drivers of",
     "schistosomiasis re-infection following clearance, and the expected margin of error around",
-    "community-level driver odds ratio estimates. The association between the",
+    "driver odds ratio estimates. The association between the",
     "outcome (infection) and each driver is estimated and tested in a multivariable GLMM.",
     "For this analysis, power is defined as the proportion of drivers that are significantly associated",
     paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario."),
-    "Power and margin of error (i.e. 95% confidence interval) in odds ratio estimation are presented",
-    "separately for individual and community-level drivers.\n\n",
+    "Power and margin of error (half the width of a 95% confidence interval) in odds ratio estimation are presented",
+    "across a range of intra-class correlation coefficient (ICC) values,",
+    "where ICC = 0% represents drivers that",
+    "vary between individuals within communities but not between communities, and ICC = 100% represents",
+    "drivers that have the same value for all community members and differ between communities.\n\n",
     "The following assumptions are made:\n-",
     paste(n.x, "drivers are associated with the outcome, of which", length(bin.x.p), "are binary and", 
           n.cont, "continuous."),
     paste0("The prevalences of the binary drivers are: ", paste(bin.x.p, collapse = ", "), ","),
     "representing ", paste(names(bin.x.p), collapse = ", "), ".\n",
-    paste("- A further", n.x.c, "continuous community-level drivers are associated with the outcome.\n"),
-    paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
-    "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
-    "and neglecting them will give optimistic power estimates.\n",
+    paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, ".\n"),
     paste0("- Log odds of re-infection varies among communities with a variance of ", 
            community.var, ".\n"),
     "- In order to control inflation of the number of false positive results due to multiple testing of",
-    n.x, "individual-level drivers and", n.x.c, "community-level drivers, the significance threshold of", 
+    n.x, "drivers, the significance threshold of", 
     nominal.alpha,
-    paste0("was Bonferroni-adjusted to ", alpha.i, " and ", alpha.c, 
-           " respectively.\n\n"),
+    paste0("was Bonferroni-adjusted to ", alpha, ".\n\n"),
     "We explore the effect on power of varying the following study design choices/assumptions:\n",
     paste0("- Total sample size: ", paste(n2bii, collapse = ", "), ".\n"),  
     paste0("- Community sample size (number of communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),  
+    paste0("- ICC: ", paste0((100 * icc), "%", collapse = ", "), ".\n"),
     paste0("- Prevalence of re-infection: ", paste(p, collapse = ", "), ".\n"),
     "- The strength of association between each driver and re-infection,",
     "defined as an odds ratio per standard deviation",
@@ -731,25 +675,15 @@ cat("## Sample size calculation for Aim 2b-ii: identifying individual- and commu
     "[PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
     "Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results)",
     paste0("directory and plotted to [", 
-           power.plot.file.name.i, 
-           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", power.plot.file.name.i, 
-           "), [",
-           power.plot.file.name.c, 
-           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", power.plot.file.name.c, 
-           "), [",
-           moe.plot.file.name.i, 
-           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name.i, 
+           power.plot.file.name, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", power.plot.file.name, 
            ") and [",
-           moe.plot.file.name.c, 
-           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name.c,").\n\n"),
+           moe.plot.file.name, 
+           "](https://github.com/pcdjohnson/SchistoDrivers/blob/main/", moe.plot.file.name,").\n\n"),
     "### Results\n",
-    paste0("![Power2biiCurveInd](", power.plot.file.name.i, ")"),
+    paste0("![Power2biiCurve](", power.plot.file.name, ")"),
     "\n\n\n",
-    paste0("![Power2biiCurveCom](", power.plot.file.name.c, ")"),
-    "\n\n\n",
-    paste0("![MoE2biiCurveInd](", moe.plot.file.name.i, ")"),
-    "\n\n\n",
-    paste0("![MoE2biiCurveCom](", moe.plot.file.name.c, ")"),
+    paste0("![MoE2biiCurve](", moe.plot.file.name, ")"),
     "\n\n\n",
     file = readme.file, append = TRUE)
 
@@ -954,9 +888,7 @@ cat("## Sample size calculation for Aim 2c: identifying community-level drivers 
     paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario.\n\n"),
     "The following assumptions are made:\n-",
     paste(n.x, "continuous drivers are associated with the outcome.\n"),
-    paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, "."),
-    "We don’t know what the true correlation is among drivers, but moderate correlations are likely",
-    "and neglecting them will give optimistic power estimates.\n",
+    paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, ".\n"),
     paste0("- Log odds of infection prevalence varies among communities with a variance of ", 
            community.var, ".\n"),
     "- In order to control inflation of the number of false positive results due to multiple testing of",
