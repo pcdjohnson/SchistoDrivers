@@ -55,7 +55,7 @@
 
  We explore the effect on power of varying the following study design choices/assumptions:
  - Total sample size: 1600.
- - Community sample size (number of communities sampled): 22, 24, 26.
+ - Community sample size (number of communities sampled): 24.
  - ICC: 0%, 25%, 50%, 75%, 100%.
  - Prevalence of re-infection: 0.5.
  - The strength of association between each driver and re-infection, defined as an odds ratio per standard deviation unit for continuous community-level drivers: 1.25, 1.5, 1.75, 2.
@@ -69,11 +69,11 @@
  ![MoE2biiCurve](schisto_moe2bii.png) 
 
 
-## Sample size calculation for Aim 2c: identifying community-level drivers of schistosomiasis infection
+## Sample size calculation for Aim 2c: identifying community- and individual-level drivers of schistosomiasis infection
 
  ### Methods
 
- The aim of this power analysis is to estimate power to detect community-level drivers of schistosomiasis infection, and the expected margin of error around community-level driver odds ratio estimates. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLMM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 500 simulated data analyses per scenario.
+ The aim of this power analysis is to estimate power to detect community- and individual-level drivers of schistosomiasis infection, and the expected margin of error around driver odds ratio estimates. The association between the outcome (infection) and each driver is estimated and tested in a multivariable GLMM. For this analysis, power is defined as the proportion of drivers that are significantly associated with the outcome, averaged across 500 simulated data analyses per scenario. Power and margin of error (half the width of a 95% confidence interval) in odds ratio estimation are presented across a range of intra-class correlation coefficient (ICC) values, where ICC = 0% represents drivers that vary between individuals within communities but not between communities, and ICC = 100% represents drivers that have the same value for all community members and differ between communities.
 
  The following assumptions are made:
 - 4 continuous drivers are associated with the outcome.
@@ -83,9 +83,10 @@
 
  We explore the effect on power of varying the following study design choices/assumptions:
  - Total sample size: 600, 1200, 1800, 2400, 3600, 4800, 6000, 7200, 8400, 9600.
- - Community sample size (number communities sampled): 22, 24, 26.
+ - Community sample size (number communities sampled): 24.
+ - ICC: 0%, 25%, 50%, 75%, 100%.
  - Prevalence of infection: 0.1, 0.5.
- - The strength of association between each driver and failure to clear, defined as an odds ratio per standard deviation unit for continuous community-level drivers: 1.25, 1.5, 1.75, 2.
+ - The strength of association between each driver and infection, defined as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2.
 
  Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results) directory and plotted to [schisto_power2c.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power2c.png) and [schisto_moe2c.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_moe2c.png).
 

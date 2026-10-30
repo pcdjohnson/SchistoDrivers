@@ -10,7 +10,10 @@ library(ggplot2)
 library(parallel)
 library(MASS)
 library(glmmTMB)
-library(GLMMmisc) # from https://github.com/pcdjohnson/GLMMmisc
+if(!"GLMMmisc" %in% rownames(installed.packages())) {
+  pak::pkg_install("pcdjohnson/GLMMmisc")
+}
+library(GLMMmisc)
 
 # Clear objects
 rm(list = ls())
@@ -418,7 +421,7 @@ rm(list = ls()[!ls() %in% keep.obj])
 n2bii <- 1600 
 
 # ...divided among n.communities
-n.communities <- c(22, 24, 26)
+n.communities <- 24
 
 # Model parameters
 
@@ -692,7 +695,9 @@ cat("## Sample size calculation for Aim 2b-ii: identifying individual- and commu
 #### Sample size for Aim 2c (community-level and individual-level drivers) ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "n.communities", "global.start.time")
+keep.obj <- 
+  c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", 
+    "n.communities", "global.start.time", "icc")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
@@ -731,19 +736,25 @@ n.cont <- 4
 # Total number of drivers:
 n.x <- n.cont
 
+# We will vary the community-level-ness of these drivers from ICC = 0% to 100%
+# already defined:
+icc
+
 # Further simulation and analysis options
 
 # adjust the significance thresholds for multiple testing (Bonferroni)
 alpha <- c(nominal.alpha/n.x)
 
 # Make table of all parameter and design combinations
-par.tab <- 
-  expand.grid(n = n, n.communities = n.communities, p = p, 
-              community.var = community.var, or = or, 
+par.tab <-
+  expand.grid(n = n, n.communities = n.communities,
+              icc = icc, p = p,
+              community.var = community.var, or = or,
               r = r, alpha = alpha, n.sim = round(n.sim/2))
 
 # No of subjects per community
-par.tab$n.per.community <- round(par.tab$n / par.tab$n.communities)
+par.tab$n.per.community <- ceiling(par.tab$n / par.tab$n.communities)
+par.tab$n.real <- par.tab$n.per.community * par.tab$n.communities
 
 # Start the clock
 start.time <- Sys.time()
@@ -764,23 +775,32 @@ sim.res <-
     # Simulate data and analysis n.sim times, returning the mean
     # number of drivers identified at P < alpha
     n.sim.out <-
-      mclapply(1:n.sim, function(k) {
-        
-        # Simulate Xs 
-        X <- mvrnorm(par.tab$n.communities[i], mu = rep(0, n.x), Sigma = sigma2)
-        
+      mclapply(1:par.tab$n.sim[i], function(k) {
+
+        # Make data frame storing each individual ID and their community ID
+        dat <- expand.grid(id = factor(1:par.tab$n.per.community[i]),
+                           community = factor(1:par.tab$n.communities[i]))
+
+        # Simulate individual-level Xs
+        X.i <- mvrnorm(par.tab$n.real[i], mu = rep(0, n.x), Sigma = sigma2)
+
+        # Simulate community level Xs
+        X.c <- mvrnorm(par.tab$n.communities[i], mu = rep(0, n.x), Sigma = sigma2)
+
+        # Combine the individual- and community-level Xs in a weighted sum depending on ICC
+        ICC <- par.tab$icc[i]
+        w <- sqrt(ICC) / (sqrt(ICC) + sqrt(1 - ICC))
+        s <- sqrt(w^2 + (1 - w)^2)
+        X <- (w * X.c[dat$community, ] + (1 - w) * X.i) / s
+
         # vector of intercept (log odds) and log odds ratios
         b <- c(qlogis(par.tab$p[i]), log(rep(par.tab$or[i], n.x)))
         names(b) <- c("intercept", paste0("X", 1:ncol(X)))
-        
-        # Make data frame storing each individual ID and their community ID
-        dat <- expand.grid(id = factor(1:par.tab$n.per.community[i]), 
-                           community = factor(1:par.tab$n.communities[i]))
-        
+
         # Add fixed effects
-        rownames(X) <- levels(dat$community)
-        dat <- data.frame(dat, X[as.character(dat$community), ])
-        
+        colnames(X) <- names(b[-1])
+        dat <- data.frame(dat, X)
+
         # Add column of no of trials (binary data so n_trials = 1)
         dat$n <- 1
         
@@ -799,20 +819,23 @@ sim.res <-
         # estimate (geometric) mean margin of error of odds ratio estimates across all drivers
         # MoE = exp(1.96 * SE) - 1
         MoE <- exp(1.96 * mean(res.tab[names(b[-1]), "Std. Error"])) - 1
-        
+
+        # guard against non-converged fits giving extreme SE estimates
+        if(!is.na(MoE) && MoE > 10) MoE <- NA
+
         # How many drivers were detected (P < alpha)?
         n.drivers.sig <- sum(res.tab[names(b[-1]), "Pr(>|z|)"] < par.tab$alpha[i])
-        
+
         # output results
         c(n.drivers.sig = n.drivers.sig, MoE = MoE)
-        
+
       }, mc.cores = detectCores())
-    
+
     # take mean number of drivers (Xs) detected across simulated data sets
     # and the geometric mean margin of error
     n.sim.out.tab <- do.call("rbind", n.sim.out)
-    c(n.drivers.sig = mean(n.sim.out.tab[, "n.drivers.sig"]),
-      MoE = exp(mean(log(n.sim.out.tab[, "MoE"]))))
+    c(n.drivers.sig = mean(n.sim.out.tab[, "n.drivers.sig"], na.rm = TRUE),
+      MoE = exp(mean(log(n.sim.out.tab[, "MoE"]), na.rm = TRUE)))
   })
 
 # Stop the clock
@@ -841,15 +864,16 @@ par.tab$n.communities.fac <-
   factor(paste("N communities =", par.tab$n.communities), paste("N communities =", n.communities))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
+par.tab$icc.fac <- factor(paste0("ICC = ", 100 * par.tab$icc, "%"), paste0("ICC = ", 100 * icc, "%"))
 
 # plot power
 power.plot <-
-  ggplot(data = par.tab, aes(x = n, y = prop.drivers, color = or, shape = or, group = or)) + 
+  ggplot(data = par.tab, aes(x = n, y = prop.drivers, color = or, shape = or, group = or)) +
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
-  facet_wrap(~ p + n.communities.fac, ncol = 3) +
+  facet_wrap(~ p + icc.fac + n.communities.fac, ncol = length(icc)) +
   xlab("Total N") +
   ylab("Power") +
   labs(caption = file.name.power2c) + # link results filename to plot
@@ -857,35 +881,40 @@ power.plot <-
         plot.caption.position = "plot")
 power.plot
 power.plot.file.name <- "schisto_power2c.png"
-ggsave(power.plot.file.name, width = 8, height = 6)
+ggsave(power.plot.file.name, power.plot, width = 12, height = 6)
 
 
 # plot margin of error
 moe.plot <-
-  ggplot(data = par.tab, aes(x = n.communities, y = 100 * or.margin.of.error, color = n.fac, group = n.fac)) + 
+  ggplot(data = par.tab, aes(x = icc, y = 100 * or.margin.of.error, color = n.fac, group = n.fac)) +
+  geom_point() +
   geom_line() +
   ylim(1, NA) +
-  facet_wrap(~ or + p, ncol = nlevels(par.tab$p)) +
-  xlab("N communities") +
+  facet_wrap(~ or + p + n.communities.fac, ncol = nlevels(par.tab$p)) +
+  xlab("ICC") +
   ylab("Margin of error (%)") +
-  scale_x_continuous(breaks = c(0, n.communities)) + 
   labs(caption = file.name.power2c) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
         plot.caption.position = "plot")
 moe.plot
 moe.plot.file.name <- "schisto_moe2c.png"
-ggsave(moe.plot.file.name, width = 6, height = 9)
+ggsave(moe.plot.file.name, moe.plot, width = 6, height = 9)
 
 # output methods and results to README.md
 
-cat("## Sample size calculation for Aim 2c: identifying community-level drivers of schistosomiasis infection\n\n",
+cat("## Sample size calculation for Aim 2c: identifying community- and individual-level drivers of schistosomiasis infection\n\n",
     "### Methods\n\n",
-    "The aim of this power analysis is to estimate power to detect community-level drivers of",
+    "The aim of this power analysis is to estimate power to detect community- and individual-level drivers of",
     "schistosomiasis infection, and the expected margin of error around",
-    "community-level driver odds ratio estimates. The association between the",
+    "driver odds ratio estimates. The association between the",
     "outcome (infection) and each driver is estimated and tested in a multivariable GLMM.",
     "For this analysis, power is defined as the proportion of drivers that are significantly associated",
-    paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario.\n\n"),
+    paste("with the outcome, averaged across", unique(par.tab$n.sim), "simulated data analyses per scenario."),
+    "Power and margin of error (half the width of a 95% confidence interval) in odds ratio estimation are presented",
+    "across a range of intra-class correlation coefficient (ICC) values,",
+    "where ICC = 0% represents drivers that",
+    "vary between individuals within communities but not between communities, and ICC = 100% represents",
+    "drivers that have the same value for all community members and differ between communities.\n\n",
     "The following assumptions are made:\n-",
     paste(n.x, "continuous drivers are associated with the outcome.\n"),
     paste0("- The drivers are correlated with each other, with a common correlation coefficient of ", r, ".\n"),
@@ -896,11 +925,12 @@ cat("## Sample size calculation for Aim 2c: identifying community-level drivers 
     paste0("is Bonferroni-adjusted to ", alpha, ", i.e. a driver is significant if P < ", alpha, ".\n\n"),
     "We explore the effect on power of varying the following study design choices/assumptions:\n",
     paste0("- Total sample size: ", paste(n, collapse = ", "), ".\n"),  
-    paste0("- Community sample size (number communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),  
+    paste0("- Community sample size (number communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),
+    paste0("- ICC: ", paste0((100 * icc), "%", collapse = ", "), ".\n"),
     paste0("- Prevalence of infection: ", paste(p, collapse = ", "), ".\n"),
-    "- The strength of association between each driver and failure to clear,",
+    "- The strength of association between each driver and infection,",
     "defined as an odds ratio per standard deviation",
-    paste0("unit for continuous community-level drivers: ", paste(or[or != 1], collapse = ", "), ".\n\n"),
+    paste0("unit for continuous drivers: ", paste(or[or != 1], collapse = ", "), ".\n\n"),
     "Full details are provided in the script",
     "[PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R).",
     "Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results)",
