@@ -10,7 +10,7 @@
  - In order to control inflation of the number of false positive results due to multiple testing of 10 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.005, i.e. a driver is significant if P < 0.005.
 
  We explore the effect on power of varying the following study design choices/assumptions:
- - Sample size (number of infected and treated individuals): 600, 1200, 1800, 2400, 3600, 4800, 6000, 7200, 8400, 9600.
+ - Sample size (number of infected and treated individuals): 600, 1200, 1800, 2400, 3000.
  - The proportion of these that fail to clear: 0.1, 0.2, 0.3.
  - The strength of association between each driver and failure to clear, defined as an odds ratio for binary drivers and as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2. To give a sense of what these effect sizes mean:
    - If a binary driver has an odds ratio of 1.5, then if 5% of people fail to clear in the absence of a driver, that proportion will be 7.3% among those who are exposed to the driver. If the prevalence of failure to clear is 25% without the driver, it will be 33% with the driver.
@@ -34,7 +34,7 @@
  - In order to control inflation of the number of false positive results due to multiple testing of 10 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.005, i.e. a driver is significant if P < 0.005.
 
  We explore the effect on power of varying the following study design choices/assumptions:
- - Sample size: it is assumed that approximately 1600 infected individuals will be recruited (mean realised number of positives = 1460), while the number of negatives will be varied: 200, 375, 550, 725, 900, 1075, 1250, 1425, 1600.
+ - Sample size: it is assumed that approximately 2400 infected individuals will be recruited (mean realised number of positives = 2190), while the number of negatives will be varied: 300, 450, 600, 750, 900, 1050, 1200.
  - The strength of association between each driver and failure to clear, defined as an odds ratio for binary drivers and as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2. Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results) directory and plotted to [schisto_power2bi.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power2bi.png).
 
  ### Results
@@ -82,10 +82,9 @@
  - In order to control inflation of the number of false positive results due to multiple testing of 4 drivers, the significance threshold of 0.05 is Bonferroni-adjusted to 0.0125, i.e. a driver is significant if P < 0.0125.
 
  We explore the effect on power of varying the following study design choices/assumptions:
- - Total sample size: 600, 1200, 1800, 2400, 3600, 4800, 6000, 7200, 8400, 9600.
- - Community sample size (number communities sampled): 24.
+ - Sample size: it is assumed that 18000 and 3600 individuals (for prevalences of 0.1 and 0.5 respectively) will be screened across 24 communities, aiming to recruit approximately 1800 infected individuals (where more than 1800 positives are found, 1800 are randomly sampled), while the number of negatives, sampled equally from each community, will be varied: 300, 450, 600, 750, 900, 1050, 1200.
  - ICC: 0%, 25%, 50%, 75%, 100%.
- - Prevalence of infection: 0.1, 0.5.
+ - Prevalence of infection: 0.1, 0.5. This is the prevalence in an average community where all drivers are at their mean values. Due to variation among communities and individuals, the realised mean numbers of positives (after capping) are 1799 and 1716 respectively.
  - The strength of association between each driver and infection, defined as an odds ratio per standard deviation unit for continuous drivers: 1.25, 1.5, 1.75, 2.
 
  Full details are provided in the script [PowerAnalysis.R](https://github.com/pcdjohnson/SchistoDrivers/blob/main/PowerAnalysis.R). Results are output as CSV to the [results](https://github.com/pcdjohnson/SchistoDrivers/tree/main/results) directory and plotted to [schisto_power2c.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_power2c.png) and [schisto_moe2c.png](https://github.com/pcdjohnson/SchistoDrivers/blob/main/schisto_moe2c.png).

@@ -29,8 +29,7 @@ global.start.time <- Sys.time()
 # Study design options
 
 # Total sample size
-n <- c(seq(600, 2400, 600), seq(3600, 9600, 1200))
-#n <- seq(1200, 2000, by = 100)
+n <- seq(600, 3000, 600)
 
 # Model parameters
 
@@ -224,10 +223,10 @@ rm(list = ls()[!ls() %in% keep.obj])
 # Study design options
 
 # Total sample size
-n.screened <- 3200
+n.screened <- 4800
 
 # Number of uninfected to retain 
-n.neg <- round(seq(n.screened/16, n.screened/2, length.out = 9))
+n.neg <- round(seq(n.screened/16, n.screened/4, length.out = 7))
 
 # Model parameters
 
@@ -322,7 +321,7 @@ sim.res <-
         n.pos <- sum(response)
         
         # Return outputs
-        return(c(n.drivers = n.drivers, n.pos = n.pos))
+        c(n.drivers = n.drivers, n.pos = n.pos)
         
       }, mc.cores = detectCores())
     n.sim.tab <- do.call("rbind", n.sim.out)
@@ -412,13 +411,13 @@ cat("## Sample size for Aim 2b-i: identifying individual-level drivers of schist
 #### Sample size for Aim 2b-ii (individual- and community-level drivers of infection and re-infection) ----
 
 # Remove objects except those still required
-keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "global.start.time")
+keep.obj <- c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", "global.start.time", "n.neg")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
 
 # Total sample size
-n2bii <- 1600 
+n2bii <- 1600
 
 # ...divided among n.communities
 n.communities <- 24
@@ -695,17 +694,18 @@ cat("## Sample size calculation for Aim 2b-ii: identifying individual- and commu
 #### Sample size for Aim 2c (community-level and individual-level drivers) ----
 
 # Remove objects except those still required
-keep.obj <- 
-  c("n.sim", "readme.file", "r", "nominal.alpha", "n", "or", 
+keep.obj <-
+  c("n.sim", "readme.file", "r", "nominal.alpha", "n.neg", "or",
     "n.communities", "global.start.time", "icc")
 rm(list = ls()[!ls() %in% keep.obj])
 
 # Study design options
 
-# Total sample size - already defined
-n
+# Number of positives to recruit (n.neg was defined above)
+n.pos <- 1800
 
-# ...divided among n.communities
+# Screened individuals are divided among n.communities, and the
+# negatives are sampled equally from each community
 n.communities
 
 # Model parameters
@@ -747,13 +747,16 @@ alpha <- c(nominal.alpha/n.x)
 
 # Make table of all parameter and design combinations
 par.tab <-
-  expand.grid(n = n, n.communities = n.communities,
+  expand.grid(n.neg = n.neg, n.communities = n.communities,
               icc = icc, p = p,
               community.var = community.var, or = or,
               r = r, alpha = alpha, n.sim = round(n.sim/2))
 
-# No of subjects per community
-par.tab$n.per.community <- ceiling(par.tab$n / par.tab$n.communities)
+# Number to screen to find (approximately) n.pos positives
+par.tab$n.screened <- n.pos / par.tab$p
+
+# No of screened subjects per community
+par.tab$n.per.community <- ceiling(par.tab$n.screened / par.tab$n.communities)
 par.tab$n.real <- par.tab$n.per.community * par.tab$n.communities
 
 # Start the clock
@@ -810,12 +813,31 @@ sim.res <-
                    fixed.eff = b,
                    rand.V = list(community = par.tab$community.var[i]),  
                    distribution = "binomial")
-        
+
+        # Drop all but n.neg of the negatives, sampling equally from each community
+        # (if n.neg isn't divisible by n.communities, randomly chosen communities get one extra,
+        # and if a community has too few negatives, all are kept)
+        n.neg.remainder <- par.tab$n.neg[i] %% par.tab$n.communities[i]
+        n.neg.per.community <-
+          par.tab$n.neg[i] %/% par.tab$n.communities[i] +
+          sample(rep(0:1, c(par.tab$n.communities[i] - n.neg.remainder, n.neg.remainder)))
+        neg.rows <-
+          unlist(lapply(1:par.tab$n.communities[i], function(j) {
+            community.neg.rows <- which(simdat$response == 0 & as.integer(simdat$community) == j)
+            community.neg.rows[sample.int(length(community.neg.rows),
+                                          min(length(community.neg.rows), n.neg.per.community[j]))]
+          }))
+
+        # Cap the number of positives at n.pos by randomly dropping the excess
+        pos.rows <- which(simdat$response == 1)
+        pos.rows <- pos.rows[sample.int(length(pos.rows), min(length(pos.rows), n.pos))]
+        keep.rows <- sort(c(neg.rows, pos.rows))
+
         # fit GLMM and get z-test p-values for Xs
         form <- paste("response ~ (1 | community) +",  paste(names(b[-1]), collapse = " + "))
-        fit <- glmmTMB(formula(form), family = binomial, data = simdat)
+        fit <- glmmTMB(formula(form), family = binomial, data = simdat[keep.rows, ])
         res.tab <- coef(summary(fit))$cond
-        
+
         # estimate (geometric) mean margin of error of odds ratio estimates across all drivers
         # MoE = exp(1.96 * SE) - 1
         MoE <- exp(1.96 * mean(res.tab[names(b[-1]), "Std. Error"])) - 1
@@ -826,16 +848,19 @@ sim.res <-
         # How many drivers were detected (P < alpha)?
         n.drivers.sig <- sum(res.tab[names(b[-1]), "Pr(>|z|)"] < par.tab$alpha[i])
 
-        # output results
-        c(n.drivers.sig = n.drivers.sig, MoE = MoE)
+        # output results, including realised numbers of positives and negatives
+        c(n.drivers.sig = n.drivers.sig, MoE = MoE,
+          n.pos = length(pos.rows), n.neg = length(neg.rows))
 
       }, mc.cores = detectCores())
 
-    # take mean number of drivers (Xs) detected across simulated data sets
-    # and the geometric mean margin of error
+    # take mean number of drivers (Xs) detected across simulated data sets,
+    # the geometric mean margin of error, and the mean numbers of positives and negatives
     n.sim.out.tab <- do.call("rbind", n.sim.out)
     c(n.drivers.sig = mean(n.sim.out.tab[, "n.drivers.sig"], na.rm = TRUE),
-      MoE = exp(mean(log(n.sim.out.tab[, "MoE"]), na.rm = TRUE)))
+      MoE = exp(mean(log(n.sim.out.tab[, "MoE"]), na.rm = TRUE)),
+      n.pos = mean(n.sim.out.tab[, "n.pos"]),
+      n.neg = mean(n.sim.out.tab[, "n.neg"]))
   })
 
 # Stop the clock
@@ -848,8 +873,12 @@ par.tab$prop.drivers <- round(sim.res["n.drivers.sig", ]/n.x, 5)
 # Estimate mean margin of error of odds ratio estimates 
 par.tab$or.margin.of.error <- round(sim.res["MoE", ], 5)
 
+# Also record the mean realised numbers of positives and negatives
+par.tab$n.pos <- round(sim.res["n.pos", ])
+par.tab$n.neg.real <- round(sim.res["n.neg", ])
+
 # Export results to CSV file with time stamp in file name
-file.name.power2c <- 
+file.name.power2c <-
   paste0("results/schisto_power2c_", 
          substr(gsub(":", "", (gsub(" ", "-", Sys.time()))), 1, 15), ".csv")
 write.csv(par.tab, file.name.power2c, row.names = FALSE, quote = FALSE)
@@ -858,23 +887,24 @@ par.tab <- read.csv(file.name.power2c)
 
 # Make plots of results
 par.tab$alpha <- factor(paste("alpha =", round(par.tab$alpha, 4)))
-par.tab$n.fac <- factor(paste("Total N =", par.tab$n), paste("Total N =", n))
+par.tab$n.neg.fac <- factor(paste("N negatives =", par.tab$n.neg), paste("N negatives =", n.neg))
 par.tab$or <- factor(paste("Odds ratio =", par.tab$or), paste("Odds ratio =", rev(or)))
-par.tab$n.communities.fac <- 
+par.tab$n.communities.fac <-
   factor(paste("N communities =", par.tab$n.communities), paste("N communities =", n.communities))
 par.tab$r <- factor(paste("Correlation among drivers (r) =", par.tab$r))
+par.tab$n.pos.fac <- factor(paste("Mean N positives =", round(ave(par.tab$n.pos, par.tab$p))))
 par.tab$p <- factor(paste("Prevalence =", par.tab$p))
 par.tab$icc.fac <- factor(paste0("ICC = ", 100 * par.tab$icc, "%"), paste0("ICC = ", 100 * icc, "%"))
 
 # plot power
 power.plot <-
-  ggplot(data = par.tab, aes(x = n, y = prop.drivers, color = or, shape = or, group = or)) +
+  ggplot(data = par.tab, aes(x = n.neg, y = prop.drivers, color = or, shape = or, group = or)) +
   geom_hline(yintercept = 0.8, linewidth = 0.3, linetype = 2) +
   geom_point() +
   geom_line() +
   ylim(0, 1) +
-  facet_wrap(~ p + icc.fac + n.communities.fac, ncol = length(icc)) +
-  xlab("Total N") +
+  facet_wrap(~ p + n.pos.fac + icc.fac, ncol = length(icc)) +
+  xlab("N negatives") +
   ylab("Power") +
   labs(caption = file.name.power2c) + # link results filename to plot
   theme(plot.caption = element_text(colour = "grey60", size = rel(0.75)),
@@ -886,11 +916,11 @@ ggsave(power.plot.file.name, power.plot, width = 12, height = 6)
 
 # plot margin of error
 moe.plot <-
-  ggplot(data = par.tab, aes(x = icc, y = 100 * or.margin.of.error, color = n.fac, group = n.fac)) +
+  ggplot(data = par.tab, aes(x = icc, y = 100 * or.margin.of.error, color = n.neg.fac, group = n.neg.fac)) +
   geom_point() +
   geom_line() +
   ylim(1, NA) +
-  facet_wrap(~ or + p + n.communities.fac, ncol = nlevels(par.tab$p)) +
+  facet_wrap(~ or + p + n.pos.fac, ncol = nlevels(par.tab$p)) +
   xlab("ICC") +
   ylab("Margin of error (%)") +
   labs(caption = file.name.power2c) + # link results filename to plot
@@ -924,10 +954,19 @@ cat("## Sample size calculation for Aim 2c: identifying community- and individua
     n.x, "drivers, the significance threshold of", nominal.alpha,
     paste0("is Bonferroni-adjusted to ", alpha, ", i.e. a driver is significant if P < ", alpha, ".\n\n"),
     "We explore the effect on power of varying the following study design choices/assumptions:\n",
-    paste0("- Total sample size: ", paste(n, collapse = ", "), ".\n"),  
-    paste0("- Community sample size (number communities sampled): ", paste(n.communities, collapse = ", "), ".\n"),
+    paste0("- Sample size: it is assumed that ", paste(n.pos / p, collapse = " and "), " individuals (for prevalences of ",
+           paste(p, collapse = " and "), " respectively) will be screened across ", n.communities,
+           " communities, aiming to recruit approximately ", n.pos, " infected individuals ",
+           "(where more than ", n.pos, " positives are found, ", n.pos, " are randomly sampled), ",
+           "while the number of negatives, sampled equally from each community, will be varied: ",
+           paste(n.neg, collapse = ", "), ".\n"),
     paste0("- ICC: ", paste0((100 * icc), "%", collapse = ", "), ".\n"),
-    paste0("- Prevalence of infection: ", paste(p, collapse = ", "), ".\n"),
+    paste0("- Prevalence of infection: ", paste(p, collapse = ", "),
+           ". This is the prevalence in an average community where all drivers are at their mean values.",
+           " Due to variation among communities and individuals, the realised mean numbers of positives",
+           " (after capping) are ",
+           paste(sapply(p, function(pp) round(mean(par.tab$n.pos[par.tab$p == paste("Prevalence =", pp)]))),
+                 collapse = " and "), " respectively.\n"),
     "- The strength of association between each driver and infection,",
     "defined as an odds ratio per standard deviation",
     paste0("unit for continuous drivers: ", paste(or[or != 1], collapse = ", "), ".\n\n"),
